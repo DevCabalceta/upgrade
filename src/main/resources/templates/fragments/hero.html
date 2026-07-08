@@ -1,0 +1,184 @@
+<section th:fragment="hero" class="relative overflow-hidden bg-black text-white pt-16">
+    
+    <div class="absolute inset-0 overflow-hidden -z-0">
+        <video 
+            id="hero-video" 
+            class="absolute inset-0 h-full w-full object-cover" 
+            autoplay muted loop playsinline preload="auto" 
+            th:poster="@{/assets/hero-fallback.jpg}" 
+            aria-hidden="true"
+        >
+            <source th:src="@{/assets/hero-video.mp4}" type="video/mp4" />
+        </video>
+        
+        <img 
+            id="hero-fallback-img" 
+            th:src="@{/assets/hero-fallback.jpg}" 
+            alt="" 
+            aria-hidden="true" 
+            class="hidden absolute inset-0 h-full w-full object-cover" 
+        />
+        
+        <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80"></div>
+        <div class="absolute inset-0 bg-black/20"></div>
+    </div>
+
+    <div class="absolute inset-0 opacity-30 pointer-events-none" style="background-image: radial-gradient(circle at 20% 50%, oklch(0.79 0.16 175 / 0.4), transparent 50%), radial-gradient(circle at 80% 20%, oklch(0.55 0.18 260 / 0.3), transparent 50%);"></div>
+
+    <div class="relative max-w-7xl mx-auto px-4 lg:px-8 py-24 lg:py-32">
+        <div class="max-w-3xl">
+            
+            <div class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs backdrop-blur reveal-element" data-reveal="fade-up">
+                <i data-lucide="sparkles" class="h-3.5 w-3.5 text-primary"></i>
+                <span>Producción audiovisual de élite</span>
+            </div>
+            
+            <h1 class="mt-6 text-5xl lg:text-7xl font-black tracking-tight leading-[1.05] reveal-element" data-reveal="fade-up" style="transition-delay: 80ms;">
+                Eventos que <span class="text-brand-gradient">se sienten</span>,
+                experiencias que <span class="inline-block whitespace-nowrap"><span id="typed-text"></span><span id="typed-cursor" class="inline-block text-primary transition-opacity duration-75">|</span></span>
+            </h1>
+            
+            <p class="mt-6 text-lg text-white/70 max-w-xl reveal-element" data-reveal="fade-up" style="transition-delay: 160ms;">
+                Sonido profesional, iluminación, pantallas LED y producción integral.
+                Tecnología, equipo humano y logística a la altura de tu evento.
+            </p>
+            
+            <div class="mt-10 flex flex-wrap gap-3 reveal-element" data-reveal="fade-up" style="transition-delay: 240ms;">
+                <a href="#contacto" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 shadow bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-6">
+                    Solicitar cotización <i data-lucide="arrow-right" class="ml-1 h-4 w-4"></i>
+                </a>
+                
+                <a th:href="@{/login}" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-primary/60 bg-transparent text-white hover:bg-white/10 hover:text-white transition-all duration-200 h-12 px-6">
+                    Acceder al ERP
+                </a>
+            </div>
+            
+            <div class="mt-12 grid grid-cols-3 gap-6 max-w-md reveal-element" data-reveal="fade-up" style="transition-delay: 320ms;">
+                <div>
+                    <div class="text-3xl font-black text-primary">+500</div>
+                    <div class="text-xs text-white/60 uppercase tracking-wider mt-1">eventos</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-black text-primary">+12</div>
+                    <div class="text-xs text-white/60 uppercase tracking-wider mt-1">años</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-black text-primary">+250</div>
+                    <div class="text-xs text-white/60 uppercase tracking-wider mt-1">clientes</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <style>
+        .reveal-element {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .reveal-element.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+
+    <script>
+    $(document).ready(function() {
+        lucide.createIcons();
+
+        // --- Lógica de Video Fallback ---
+        const video = document.getElementById('hero-video');
+        const fallbackImg = document.getElementById('hero-fallback-img');
+
+        if (video) {
+            video.addEventListener('error', function() {
+                $(video).addClass('hidden');
+                $(fallbackImg).removeClass('hidden');
+            });
+
+            let playPromise = video.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(function() {
+                    $(video).addClass('hidden');
+                    $(fallbackImg).removeClass('hidden');
+                });
+            }
+        }
+
+        // --- Lógica Exacta de useTypedText ---
+        const WORDS = [
+            "recuerdan", "impactan", "inspiran", "conectan",
+            "sorprenden", "transforman", "emocionan", "destacan"
+        ];
+
+        const TYPE_SPEED_MIN = 50;
+        const TYPE_SPEED_MAX = 80;
+        const DELETE_SPEED_MIN = 30;
+        const DELETE_SPEED_MAX = 50;
+        const PAUSE_MS = 1800;
+
+        function rand(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        let phase = "typing";
+        let wordIndex = 0;
+        let charIndex = 0;
+        const $typedText = $('#typed-text');
+        const $cursor = $('#typed-cursor');
+
+        function tick() {
+            const word = WORDS[wordIndex];
+
+            if (phase === "typing") {
+                charIndex++;
+                $typedText.text(word.slice(0, charIndex));
+                if (charIndex >= word.length) {
+                    phase = "pausing";
+                    setTimeout(tick, PAUSE_MS);
+                } else {
+                    setTimeout(tick, rand(TYPE_SPEED_MIN, TYPE_SPEED_MAX));
+                }
+            } else if (phase === "pausing") {
+                phase = "deleting";
+                setTimeout(tick, rand(DELETE_SPEED_MIN, DELETE_SPEED_MAX));
+            } else if (phase === "deleting") {
+                charIndex--;
+                $typedText.text(word.slice(0, charIndex));
+                if (charIndex <= 0) {
+                    wordIndex = (wordIndex + 1) % WORDS.length;
+                    phase = "typing";
+                    setTimeout(tick, rand(TYPE_SPEED_MIN, TYPE_SPEED_MAX));
+                } else {
+                    setTimeout(tick, rand(DELETE_SPEED_MIN, DELETE_SPEED_MAX));
+                }
+            }
+        }
+
+        setTimeout(tick, rand(TYPE_SPEED_MIN, TYPE_SPEED_MAX));
+
+        setInterval(function() {
+            let currentOpacity = $cursor.css('opacity');
+            $cursor.css('opacity', currentOpacity == '1' ? '0' : '1');
+        }, 530);
+
+        // --- Lógica Scroll Reveal ---
+        const revealElements = document.querySelectorAll('.reveal-element');
+        const revealObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    $(entry.target).addClass('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, {
+            root: null,
+            threshold: 0.1,
+            rootMargin: "0px 0px -50px 0px"
+        });
+
+        revealElements.forEach(el => revealObserver.observe(el));
+    });
+    </script>
+</section>

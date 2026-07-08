@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/layout :: layout(~{::title}, ~{::main})}">
+<head>
+    <title>Upgrade! — Comunicación y Entretenimiento</title>
+</head>
+<body>
+    
+    <main>
+        <div th:replace="~{fragments/hero :: hero}"></div>
+        <div th:replace="~{fragments/servicios :: servicios}"></div>
+        <div th:replace="~{fragments/equipos :: equipos}"></div>
+        <div th:replace="~{fragments/projectsGallery :: projectsGallery}"></div>
+        <div th:replace="~{fragments/socialProofWall :: socialProofWall}"></div>
+        <div th:replace="~{fragments/faqSection :: faqSection}"></div>
+        <div th:replace="~{fragments/contacto :: contacto}"></div>
+    </main>
+
+</body>
+</html>

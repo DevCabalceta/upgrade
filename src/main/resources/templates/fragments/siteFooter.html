@@ -1,0 +1,197 @@
+<div th:fragment="siteFooter">
+    <footer class="relative bg-background border-t border-border">
+        <div class="h-px w-full brand-gradient opacity-60"></div>
+
+        <div class="max-w-7xl mx-auto px-4 lg:px-8 py-16">
+            <div class="grid gap-12 lg:gap-8 md:grid-cols-2 lg:grid-cols-12">
+                
+                <div class="lg:col-span-4">
+                    <img th:src="@{/assets/upgrade-logo.png}" alt="Upgrade! Comunicación y Entretenimiento" class="h-10 w-auto" draggable="false" />
+                    
+                    <p class="mt-4 text-sm text-muted-foreground max-w-sm leading-relaxed">
+                        Upgrade! Comunicación y Entretenimiento. Producción audiovisual integral, sonido,
+                        iluminación y pantallas LED para eventos corporativos y artísticos de alto nivel.
+                    </p>
+                    
+                    <div class="mt-6 flex items-center gap-2">
+                        <a th:each="icon : ${ {'instagram', 'facebook', 'linkedin', 'youtube'} }"
+                           href="#"
+                           th:aria-label="'social-' + ${icon}"
+                           class="h-9 w-9 rounded-full border border-border grid place-items-center text-muted-foreground hover:text-primary-foreground hover:bg-primary hover:border-primary transition-all hover:-translate-y-0.5">
+                            <i th:data-lucide="${icon}" class="h-4 w-4"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2">
+                    <div class="text-xs font-semibold uppercase tracking-[0.18em] text-foreground/80 mb-4">
+                        Navegación
+                    </div>
+                    <ul class="space-y-3">
+                        <li>
+                            <a href="#" class="group inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-all">
+                                <span class="relative">
+                                    Inicio
+                                    <span class="absolute -bottom-0.5 left-0 h-px w-0 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                                </span>
+                                <i data-lucide="arrow-up-right" class="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#servicios" class="group inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-all">
+                                <span class="relative">
+                                    Nosotros
+                                    <span class="absolute -bottom-0.5 left-0 h-px w-0 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                                </span>
+                                <i data-lucide="arrow-up-right" class="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#servicios" class="group inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-all">
+                                <span class="relative">
+                                    Servicios
+                                    <span class="absolute -bottom-0.5 left-0 h-px w-0 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                                </span>
+                                <i data-lucide="arrow-up-right" class="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#galeria" class="group inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-all">
+                                <span class="relative">
+                                    Galería
+                                    <span class="absolute -bottom-0.5 left-0 h-px w-0 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                                </span>
+                                <i data-lucide="arrow-up-right" class="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#equipos" class="group inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-all">
+                                <span class="relative">
+                                    Equipos
+                                    <span class="absolute -bottom-0.5 left-0 h-px w-0 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                                </span>
+                                <i data-lucide="arrow-up-right" class="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#contacto" class="group inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-all">
+                                <span class="relative">
+                                    Contacto
+                                    <span class="absolute -bottom-0.5 left-0 h-px w-0 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                                </span>
+                                <i data-lucide="arrow-up-right" class="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="lg:col-span-3">
+                    <div class="text-xs font-semibold uppercase tracking-[0.18em] text-foreground/80 mb-4">
+                        Servicios
+                    </div>
+                    <ul class="space-y-3">
+                        <li>
+                            <a href="#servicios" class="group inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-all">
+                                <span class="relative">
+                                    Audio Profesional
+                                    <span class="absolute -bottom-0.5 left-0 h-px w-0 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                                </span>
+                                <i data-lucide="arrow-up-right" class="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#servicios" class="group inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-all">
+                                <span class="relative">
+                                    Iluminación
+                                    <span class="absolute -bottom-0.5 left-0 h-px w-0 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                                </span>
+                                <i data-lucide="arrow-up-right" class="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#servicios" class="group inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-all">
+                                <span class="relative">
+                                    Pantallas LED
+                                    <span class="absolute -bottom-0.5 left-0 h-px w-0 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                                </span>
+                                <i data-lucide="arrow-up-right" class="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#servicios" class="group inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-all">
+                                <span class="relative">
+                                    Producción Audiovisual
+                                    <span class="absolute -bottom-0.5 left-0 h-px w-0 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                                </span>
+                                <i data-lucide="arrow-up-right" class="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#servicios" class="group inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-all">
+                                <span class="relative">
+                                    Eventos Corporativos
+                                    <span class="absolute -bottom-0.5 left-0 h-px w-0 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                                </span>
+                                <i data-lucide="arrow-up-right" class="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="lg:col-span-3">
+                    <div class="text-xs font-semibold uppercase tracking-[0.18em] text-foreground/80 mb-4">
+                        Contacto
+                    </div>
+                    <ul class="space-y-3 text-sm text-muted-foreground">
+                        <li class="flex items-start gap-2.5">
+                            <i data-lucide="mail" class="h-4 w-4 text-primary mt-0.5 shrink-0"></i>
+                            <a href="mailto:hola@upgrade.com" class="hover:text-primary transition-colors">hola@upgrade.com</a>
+                        </li>
+                        <li class="flex items-start gap-2.5">
+                            <i data-lucide="phone" class="h-4 w-4 text-primary mt-0.5 shrink-0"></i>
+                            <a href="tel:+525551234567" class="hover:text-primary transition-colors">+52 555 123 4567</a>
+                        </li>
+                        <li class="flex items-start gap-2.5">
+                            <i data-lucide="map-pin" class="h-4 w-4 text-primary mt-0.5 shrink-0"></i>
+                            <span>Ciudad de México, MX</span>
+                        </li>
+                        <li class="flex items-start gap-2.5">
+                            <i data-lucide="clock" class="h-4 w-4 text-primary mt-0.5 shrink-0"></i>
+                            <span>Lun – Vie · 9:00 – 19:00</span>
+                        </li>
+                    </ul>
+                    <a th:href="@{/login}" class="mt-5 inline-flex items-center gap-1.5 text-xs font-semibold text-primary group">
+                        Acceder al ERP
+                        <i data-lucide="arrow-up-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="mt-14 pt-6 border-t border-border flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="text-xs text-muted-foreground">
+                    &copy; 2026 Upgrade! Comunicación y Entretenimiento. Todos los derechos reservados.
+                </div>
+                <ul class="flex flex-wrap items-center gap-x-6 gap-y-2">
+                    <li>
+                        <a href="#" class="group inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors">
+                            Privacidad
+                            <i data-lucide="arrow-up-right" class="h-3 w-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="group inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors">
+                            Términos
+                            <i data-lucide="arrow-up-right" class="h-3 w-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="group inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors">
+                            Cookies
+                            <i data-lucide="arrow-up-right" class="h-3 w-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"></i>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+</div>

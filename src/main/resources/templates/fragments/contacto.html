@@ -1,0 +1,116 @@
+<div th:fragment="contacto">
+    <section id="contacto" class="py-24 bg-black text-white">
+        <div class="max-w-5xl mx-auto px-4 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                
+                <div class="reveal-element" data-reveal="fade-right">
+                    <h2 class="text-4xl lg:text-5xl font-black tracking-tight">¿Listo para tu próximo evento?</h2>
+                    <p class="mt-4 text-white/70">Cuéntanos qué imaginas y te respondemos en menos de 24 horas con una propuesta a la medida.</p>
+                    <div class="mt-8 space-y-3 text-sm">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="phone" class="h-4 w-4 text-primary"></i>
+                            <span>+52 555 123 4567</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="mail" class="h-4 w-4 text-primary"></i>
+                            <span>hola@upgrade.com</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="map-pin" class="h-4 w-4 text-primary"></i>
+                            <span>Ciudad de San José, CR</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-3xl bg-white/5 border border-white/10 p-8 backdrop-blur reveal-element" data-reveal="fade-left">
+                    <h3 class="font-semibold text-lg mb-4">Solicita una cotización</h3>
+                    
+                    <form id="contactForm" class="space-y-3">
+                        <input 
+                            type="text" 
+                            name="nombre" 
+                            id="nombre"
+                            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 h-11 text-sm placeholder:text-white/40 focus:outline-none focus:border-primary transition-colors" 
+                            placeholder="Nombre completo" 
+                        />
+                        <input 
+                            type="email" 
+                            name="email" 
+                            id="email"
+                            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 h-11 text-sm placeholder:text-white/40 focus:outline-none focus:border-primary transition-colors" 
+                            placeholder="Email" 
+                        />
+                        <input 
+                            type="text" 
+                            name="tipo_evento" 
+                            id="tipo"
+                            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 h-11 text-sm placeholder:text-white/40 focus:outline-none focus:border-primary transition-colors" 
+                            placeholder="Tipo de evento" 
+                        />
+                        <textarea 
+                            name="mensaje" 
+                            id="mensaje"
+                            rows="4" 
+                            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm placeholder:text-white/40 focus:outline-none focus:border-primary transition-colors resize-none" 
+                            placeholder="Cuéntanos sobre tu proyecto..." 
+                        ></textarea>
+                        
+                        <button 
+                            type="submit" 
+                            class="w-full inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-11 cursor-pointer"
+                        >
+                            Enviar solicitud <i data-lucide="arrow-right" class="h-4 w-4"></i>
+                        </button>
+                    </form>
+
+                    <div class="mt-4 flex items-center gap-2 text-xs text-white/60">
+                        <i data-lucide="check-circle-2" class="h-3.5 w-3.5 text-primary"></i> 
+                        Respuesta garantizada en 24h
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('#contactForm').on('submit', function(e) {
+                e.preventDefault();
+
+                const nombre = $('#nombre').val().trim();
+                const email = $('#email').val().trim();
+                const tipo = $('#tipo').val().trim();
+                const mensaje = $('#mensaje').val().trim();
+
+                if (!nombre || !email || !tipo || !mensaje) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Campos incompletos',
+                        text: 'Debes completar todos los campos.',
+                        background: 'rgba(0, 0, 0, 0.85)',
+                        color: '#fff',
+                        confirmButtonColor: '#01d1ac',
+                        confirmButtonText: 'Aceptar'
+                    });
+                    return;
+                }
+
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Mensaje enviado!',
+                    text: 'Tu mensaje ha sido enviado correctamente.',
+                    background: 'rgba(0, 0, 0, 0.85)',
+                    color: '#fff',
+                    confirmButtonColor: '#01d1ac',
+                    confirmButtonText: 'Aceptar'
+                }).then(() => {
+                    // Limpiar el formulario
+                    $('#contactForm')[0].reset();
+                });
+            });
+        });
+    </script>
+</div>

@@ -1,0 +1,155 @@
+<header th:fragment="landingNav" id="landing-header" class="fixed top-0 inset-x-0 z-50 transition-all duration-500 bg-transparent border-b border-transparent">
+    <div class="max-w-7xl mx-auto px-4 lg:px-8 h-16 flex items-center justify-between">
+        
+        <button id="scroll-top" class="hover:cursor-pointer focus:outline-none bg-transparent border-0 p-0">
+            <img th:src="@{/assets/upgrade-logo.png}" alt="Upgrade! Comunicación y Entretenimiento" class="h-9 w-auto" draggable="false" />
+        </button>
+
+        <nav class="hidden md:flex items-center gap-8 text-sm font-medium">
+            <a href="#servicios" class="nav-link transition-colors hover:text-primary text-white/90 [text-shadow:0_1px_2px_rgba(0,0,0,0.45)]">Servicios</a>
+            <a href="#equipos" class="nav-link transition-colors hover:text-primary text-white/90 [text-shadow:0_1px_2px_rgba(0,0,0,0.45)]">Equipos</a>
+            <a href="#galeria" class="nav-link transition-colors hover:text-primary text-white/90 [text-shadow:0_1px_2px_rgba(0,0,0,0.45)]">Galería</a>
+            <a href="#contacto" class="nav-link transition-colors hover:text-primary text-white/90 [text-shadow:0_1px_2px_rgba(0,0,0,0.45)]">Contacto</a>
+        </nav>
+
+        <div class="flex items-center gap-2">
+            
+            <button id="theme-toggle" aria-label="Cambiar tema" class="header-icon-btn h-9 w-9 rounded-full grid place-items-center transition hover:cursor-pointer text-white/90 hover:text-white hover:bg-white/10">
+                <i data-lucide="moon" class="h-[18px] w-[18px] block dark:hidden"></i>
+                <i data-lucide="sun" class="h-[18px] w-[18px] hidden dark:block"></i>
+            </button>
+            
+            <a th:href="@{/login}" class="hidden sm:inline-flex">
+                <button id="login-btn" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-8 px-3 text-xs hover:bg-accent hover:text-accent-foreground text-white hover:text-white hover:bg-white/10">
+                    Ingresar
+                </button>
+            </a>
+            
+            <a href="#contacto" class="hidden sm:inline-flex">
+                <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 shadow h-8 px-3 text-xs bg-primary text-primary-foreground hover:bg-primary/90">
+                    Cotizar
+                </button>
+            </a>
+            
+            <button id="mobile-menu-toggle" aria-label="Menú" class="md:hidden header-icon-btn h-9 w-9 rounded-full grid place-items-center transition text-white/90 hover:bg-white/10">
+                <i id="mobile-icon" data-lucide="menu" class="h-5 w-5"></i>
+            </button>
+            
+        </div>
+    </div>
+
+    <div id="mobile-drawer" class="hidden md:hidden border-t border-border bg-background/95 backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-200">
+        <div class="px-4 py-3 flex flex-col gap-1">
+            <a href="#servicios" class="mobile-link px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground">Servicios</a>
+            <a href="#equipos" class="mobile-link px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground">Equipos</a>
+            <a href="#galeria" class="mobile-link px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground">Galería</a>
+            <a href="#contacto" class="mobile-link px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground">Contacto</a>
+            
+            <div class="flex gap-2 pt-2">
+                <a th:href="@{/login}" class="flex-1">
+                    <button class="w-full inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs">
+                        Ingresar
+                    </button>
+                </a>
+                <a href="#contacto" class="flex-1 mobile-link">
+                    <button class="w-full inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring shadow bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-3 text-xs">
+                        Cotizar
+                    </button>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // --- 1. Lógica del Scroll ---
+            function handleScroll() {
+                var isScrolled = $(window).scrollTop() > 24;
+                var $header = $('#landing-header');
+                var $navLinks = $('.nav-link');
+                var $iconBtns = $('.header-icon-btn'); 
+                var $loginBtn = $('#login-btn');
+
+                if (isScrolled) {
+                    $header.addClass('bg-background/80 backdrop-blur-xl border-b border-border shadow-[0_4px_24px_-12px_rgba(0,0,0,0.25)]')
+                           .removeClass('bg-transparent border-transparent');
+                    
+                    $navLinks.addClass('text-muted-foreground')
+                             .removeClass('text-white/90 [text-shadow:0_1px_2px_rgba(0,0,0,0.45)]');
+                    
+                    $iconBtns.addClass('text-foreground/80 hover:text-foreground hover:bg-foreground/10')
+                             .removeClass('text-white/90 hover:text-white hover:bg-white/10');
+                    
+                    $loginBtn.removeClass('text-white hover:text-white hover:bg-white/10');
+                } else {
+                    $header.removeClass('bg-background/80 backdrop-blur-xl border-b border-border shadow-[0_4px_24px_-12px_rgba(0,0,0,0.25)]')
+                           .addClass('bg-transparent border-transparent');
+                    
+                    $navLinks.removeClass('text-muted-foreground')
+                             .addClass('text-white/90 [text-shadow:0_1px_2px_rgba(0,0,0,0.45)]');
+                    
+                    $iconBtns.removeClass('text-foreground/80 hover:text-foreground hover:bg-foreground/10')
+                             .addClass('text-white/90 hover:text-white hover:bg-white/10');
+                             
+                    $loginBtn.addClass('text-white hover:text-white hover:bg-white/10');
+                }
+            }
+            
+            handleScroll();
+            $(window).on('scroll', handleScroll);
+
+            // --- 2. Lógica ScrollToTop (Logo Click) ---
+            $('#scroll-top').on('click', function(e) {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+
+            // --- 3. Lógica del Menú Móvil ---
+            var isMenuOpen = false;
+            $('#mobile-menu-toggle').on('click', function() {
+                isMenuOpen = !isMenuOpen;
+                $('#mobile-drawer').toggleClass('hidden');
+                
+                $('#mobile-icon').attr('data-lucide', isMenuOpen ? 'x' : 'menu');
+                lucide.createIcons();
+            });
+
+            $('.mobile-link').on('click', function() {
+                if (isMenuOpen) {
+                    isMenuOpen = false;
+                    $('#mobile-drawer').addClass('hidden');
+                    $('#mobile-icon').attr('data-lucide', 'menu');
+                    lucide.createIcons();
+                }
+            });
+
+            // --- 4. Lógica del Theme ---
+            const STORAGE_KEY = 'upgrade-theme';
+
+            function getInitialTheme() {
+                var stored = localStorage.getItem(STORAGE_KEY);
+                if (stored === 'light' || stored === 'dark') return stored;
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+
+            var currentTheme = getInitialTheme();
+            if (currentTheme === 'dark') {
+                $('html').addClass('dark');
+            } else {
+                $('html').removeClass('dark');
+            }
+
+            $('#theme-toggle').on('click', function() {
+                currentTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+                
+                if (currentTheme === 'dark') {
+                    $('html').addClass('dark');
+                } else {
+                    $('html').removeClass('dark');
+                }
+                
+                try { localStorage.setItem(STORAGE_KEY, currentTheme); } catch (e) {}
+            });
+        });
+    </script>
+</header>
