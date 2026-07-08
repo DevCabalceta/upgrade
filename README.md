@@ -1,4 +1,4 @@
-# 🚀 UPGRADE ERP
+# 🚀 UPGRADE 
 
 <p align="center">
   <img src="docs/logo-upgrade.png" alt="Upgrade ERP Logo" width="300">
