@@ -1,15 +1,525 @@
 <!DOCTYPE html>
-<!--
-Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
-Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this template
--->
-<html>
-    <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body>
-        <div>TODO write content</div>
-    </body>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ingresar — Upgrade</title>
+
+    <script>
+        if (localStorage.getItem('upgrade-theme') === 'dark' || (!('upgrade-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    
+    <script th:src="@{/dist/js/tailwind.js}"></script>
+    
+    <style type="text/tailwindcss">
+      /* 1. Variantes personalizadas y Tema */
+      @custom-variant dark (&:is(.dark *));
+
+      @theme inline {
+        --radius-sm: calc(var(--radius) - 4px);
+        --radius-md: calc(var(--radius) - 2px);
+        --radius-lg: var(--radius);
+        --radius-xl: calc(var(--radius) + 4px);
+        --radius-2xl: calc(var(--radius) + 8px);
+        --color-background: var(--background);
+        --color-foreground: var(--foreground);
+        --color-card: var(--card);
+        --color-card-foreground: var(--card-foreground);
+        --color-popover: var(--popover);
+        --color-popover-foreground: var(--popover-foreground);
+        --color-primary: var(--primary);
+        --color-primary-foreground: var(--primary-foreground);
+        --color-secondary: var(--secondary);
+        --color-secondary-foreground: var(--secondary-foreground);
+        --color-muted: var(--muted);
+        --color-muted-foreground: var(--muted-foreground);
+        --color-accent: var(--accent);
+        --color-accent-foreground: var(--accent-foreground);
+        --color-destructive: var(--destructive);
+        --color-destructive-foreground: var(--destructive-foreground);
+        --color-success: var(--success);
+        --color-success-foreground: var(--success-foreground);
+        --color-warning: var(--warning);
+        --color-warning-foreground: var(--warning-foreground);
+        --color-border: var(--border);
+        --color-input: var(--input);
+        --color-ring: var(--ring);
+        --color-sidebar: var(--sidebar);
+        --color-sidebar-foreground: var(--sidebar-foreground);
+        --color-sidebar-primary: var(--sidebar-primary);
+        --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+        --color-sidebar-accent: var(--sidebar-accent);
+        --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+        --color-sidebar-border: var(--sidebar-border);
+        --color-sidebar-ring: var(--sidebar-ring);
+        --color-chart-1: var(--chart-1);
+        --color-chart-2: var(--chart-2);
+        --color-chart-3: var(--chart-3);
+        --color-chart-4: var(--chart-4);
+        --color-chart-5: var(--chart-5);
+        --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+      }
+
+      /* 2. Variables de Color (Light/Dark) */
+      :root {
+        --radius: 0.75rem;
+        --background: oklch(0.985 0.005 220);
+        --foreground: oklch(0.22 0.02 260);
+        --card: oklch(1 0 0);
+        --card-foreground: oklch(0.22 0.02 260);
+        --popover: oklch(1 0 0);
+        --popover-foreground: oklch(0.22 0.02 260);
+        --primary: oklch(0.79 0.16 175);
+        --primary-foreground: oklch(0.15 0.02 260);
+        --secondary: oklch(0.965 0.005 220);
+        --secondary-foreground: oklch(0.22 0.02 260);
+        --muted: oklch(0.965 0.005 220);
+        --muted-foreground: oklch(0.55 0.02 260);
+        --accent: oklch(0.95 0.04 175);
+        --accent-foreground: oklch(0.22 0.02 260);
+        --destructive: oklch(0.63 0.22 27);
+        --destructive-foreground: oklch(0.99 0 0);
+        --success: oklch(0.72 0.17 152);
+        --success-foreground: oklch(0.15 0.02 260);
+        --warning: oklch(0.78 0.16 75);
+        --warning-foreground: oklch(0.15 0.02 260);
+        --border: oklch(0.92 0.006 250);
+        --input: oklch(0.92 0.006 250);
+        --ring: oklch(0.79 0.16 175);
+        --chart-1: oklch(0.79 0.16 175);
+        --chart-2: oklch(0.55 0.18 260);
+        --chart-3: oklch(0.78 0.16 75);
+        --chart-4: oklch(0.63 0.22 27);
+        --chart-5: oklch(0.45 0.02 260);
+        --sidebar: oklch(0.16 0.005 260);
+        --sidebar-foreground: oklch(0.96 0.005 220);
+        --sidebar-primary: oklch(0.79 0.16 175);
+        --sidebar-primary-foreground: oklch(0.15 0.02 260);
+        --sidebar-accent: oklch(0.22 0.005 260);
+        --sidebar-accent-foreground: oklch(0.99 0 0);
+        --sidebar-border: oklch(0.27 0.005 260);
+        --sidebar-ring: oklch(0.79 0.16 175);
+      }
+
+      .dark {
+        --background: oklch(0.14 0.01 260);
+        --foreground: oklch(0.98 0.003 220);
+        --card: oklch(0.19 0.01 260);
+        --card-foreground: oklch(0.98 0.003 220);
+        --popover: oklch(0.19 0.01 260);
+        --popover-foreground: oklch(0.98 0.003 220);
+        --primary: oklch(0.82 0.17 175);
+        --primary-foreground: oklch(0.14 0.01 260);
+        --secondary: oklch(0.24 0.01 260);
+        --secondary-foreground: oklch(0.98 0.003 220);
+        --muted: oklch(0.24 0.01 260);
+        --muted-foreground: oklch(0.72 0.02 260);
+        --accent: oklch(0.28 0.04 175);
+        --accent-foreground: oklch(0.98 0.003 220);
+        --destructive: oklch(0.65 0.22 27);
+        --destructive-foreground: oklch(0.99 0 0);
+        --success: oklch(0.72 0.17 152);
+        --success-foreground: oklch(0.14 0.01 260);
+        --warning: oklch(0.78 0.16 75);
+        --warning-foreground: oklch(0.14 0.01 260);
+        --border: oklch(1 0 0 / 10%);
+        --input: oklch(1 0 0 / 15%);
+        --ring: oklch(0.82 0.17 175);
+        --sidebar: oklch(0.12 0.005 260);
+        --sidebar-foreground: oklch(0.96 0.005 220);
+        --sidebar-primary: oklch(0.82 0.17 175);
+        --sidebar-primary-foreground: oklch(0.14 0.01 260);
+        --sidebar-accent: oklch(0.20 0.005 260);
+        --sidebar-accent-foreground: oklch(0.98 0.003 220);
+        --sidebar-border: oklch(1 0 0 / 8%);
+        --sidebar-ring: oklch(0.82 0.17 175);
+      }
+
+      /* 3. Capas base y globales */
+      @layer base {
+        * { border-color: var(--color-border); }
+        html { scroll-behavior: smooth; }
+        html, body { font-family: var(--font-sans); }
+        body {
+          background-color: var(--color-background);
+          color: var(--color-foreground);
+          -webkit-font-smoothing: antialiased;
+          transition: background-color 0.4s ease, color 0.4s ease;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          html { scroll-behavior: auto; }
+        }
+      }
+
+      /* 4. Animaciones y Grid Masonry */
+      @layer utilities {
+        [data-reveal] {
+          opacity: 0;
+          transition: opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+                      transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+          will-change: opacity, transform;
+        }
+        [data-reveal="fade-up"] { transform: translate3d(0, 28px, 0); }
+        [data-reveal="fade-right"] { transform: translate3d(-28px, 0, 0); }
+        [data-reveal="fade-left"] { transform: translate3d(28px, 0, 0); }
+        [data-reveal="zoom-in"] { transform: scale(0.94); }
+        [data-reveal="fade-in"] { transform: none; }
+        [data-reveal].is-revealed {
+          opacity: 1;
+          transform: translate3d(0, 0, 0) scale(1);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          [data-reveal] { opacity: 1 !important; transform: none !important; transition: none !important; }
+        }
+
+        .masonry { column-gap: 1.25rem; }
+        @media (min-width: 768px) { .masonry { column-count: 2; } }
+        @media (min-width: 1024px) { .masonry { column-count: 3; } }
+        @media (min-width: 1280px) { .masonry { column-count: 3; column-gap: 1.5rem; } }
+        .masonry > * {
+          break-inside: avoid;
+          -webkit-column-break-inside: avoid;
+          page-break-inside: avoid;
+          margin-bottom: 1.25rem;
+          display: block;
+        }
+      }
+
+      /* 5. Utilidades personalizadas */
+      @utility glass-card {
+        background: color-mix(in oklab, var(--card) 80%, transparent);
+        backdrop-filter: blur(12px);
+        border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
+      }
+      @utility brand-gradient {
+        background: linear-gradient(135deg, oklch(0.79 0.16 175) 0%, oklch(0.65 0.16 200) 100%);
+      }
+      @utility text-brand-gradient {
+        background: linear-gradient(135deg, oklch(0.79 0.16 175) 0%, oklch(0.6 0.18 220) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      /* 6. TRADUCCIÓN DEL COMPONENTE BUTTON */
+      @layer components {
+        .btn {
+          @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed;
+        }
+        .btn svg {
+          @apply pointer-events-none size-4 shrink-0;
+        }
+
+        .btn-default { @apply bg-primary text-primary-foreground shadow hover:bg-primary/90; }
+        .btn-destructive { @apply bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90; }
+        .btn-outline { @apply border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground; }
+        .btn-secondary { @apply bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80; }
+        .btn-ghost { @apply hover:bg-accent hover:text-accent-foreground; }
+        .btn-link { @apply text-primary underline-offset-4 hover:underline; }
+
+        .btn-size-default { @apply h-9 px-4 py-2; }
+        .btn-size-sm { @apply h-8 rounded-md px-3 text-xs; }
+        .btn-size-lg { @apply h-10 rounded-md px-8; }
+        .btn-size-icon { @apply h-9 w-9; }
+      }
+    </style>
+
+    <script th:src="@{/dist/js/lucide.min.js}"></script>
+    <script th:src="@{/dist/js/jquery-3.7.1.min.js}"></script>
+</head>
+<body class="min-h-screen bg-background font-sans antialiased">
+
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <div class="min-h-screen grid lg:grid-cols-2">
+        
+        <div class="flex items-center justify-center p-6 lg:p-12">
+            <div class="w-full max-w-sm">
+                
+                <a th:href="@{/}">
+                    <img th:src="@{/assets/upgrade-logo.png}" alt="Upgrade! Comunicación y Entretenimiento" class="h-10 w-auto mb-12" draggable="false" />
+                </a>
+                
+                <h1 class="text-3xl font-bold tracking-tight text-foreground">Bienvenido de vuelta</h1>
+                <p class="mt-2 text-sm text-muted-foreground">Ingresa para gestionar tus operaciones.</p>
+
+                <div th:if="${param.error}" class="mt-8 p-3 text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-md flex items-center gap-2">
+                    <i data-lucide="alert-circle" class="h-4 w-4 shrink-0"></i>
+                    <span>Usuario o contraseña incorrectos o cuenta inactiva.</span>
+                </div>
+                
+                <div th:if="${param.logout}" class="mt-8 p-3 text-sm text-success bg-success/10 border border-success/30 rounded-md flex items-center gap-2">
+                    <i data-lucide="check-circle-2" class="h-4 w-4 shrink-0"></i>
+                    <span>Has cerrado sesión correctamente.</span>
+                </div>
+
+                <form id="loginForm" th:action="@{/login}" method="post" class="mt-8 space-y-4">
+                    <div class="space-y-2">
+                        <label for="username" class="text-sm font-medium leading-none">Usuario o correo</label>
+                        <input type="text" id="username" name="username" placeholder="juan@upgrade.com"
+                            class="flex h-11 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50" />
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <label for="password" class="text-sm font-medium leading-none">Contraseña</label>
+                            <button type="button" id="btnForgotTrigger" class="text-xs text-primary hover:underline cursor-pointer">
+                                ¿Olvidaste tu contraseña?
+                            </button>
+                        </div>
+                        <input type="password" id="password" name="password" placeholder="••••••••" 
+                            class="flex h-11 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50" />
+                    </div>
+                    
+                    <label class="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+                        <div class="relative grid place-content-center h-4 w-4 shrink-0 rounded-sm border border-primary shadow bg-transparent transition-all" id="customCheckbox">
+                            <input type="checkbox" id="remember" name="remember-me" class="peer sr-only" />
+                            <i data-lucide="check" class="h-3.5 w-3.5 text-primary-foreground hidden"></i>
+                        </div>
+                        Recordarme en este dispositivo
+                    </label>
+
+                    <button type="submit" class="btn w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 shadow font-semibold">
+                        Ingresar <i data-lucide="arrow-right" class="ml-1 h-4 w-4 shrink-0"></i>
+                    </button>
+                </form>
+
+                <div class="mt-8 text-center text-xs text-muted-foreground">
+                    ¿Necesitas acceso? Contacta al administrador del sistema.
+                </div>
+            </div>
+        </div>
+
+        <div class="hidden lg:block relative bg-black overflow-hidden">
+            <div class="absolute inset-0" style="background-image: radial-gradient(circle at 30% 30%, oklch(0.79 0.16 175 / 0.4), transparent 50%), radial-gradient(circle at 80% 70%, oklch(0.55 0.18 260 / 0.4), transparent 50%);"></div>
+            
+            <div class="relative h-full flex flex-col justify-between p-12 text-white">
+                <div class="inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs backdrop-blur">
+                    <i data-lucide="sparkles" class="h-3.5 w-3.5 text-primary"></i> Upgrade ERP 2026
+                </div>
+                
+                <div>
+                    <h2 class="text-5xl font-black tracking-tight leading-tight max-w-md">
+                        Tu operación, <span class="text-brand-gradient">en sintonía perfecta.</span>
+                    </h2>
+                    <p class="mt-4 text-white/70 max-w-md">
+                        Gestiona clientes, inventario, eventos y mantenimiento desde un solo lugar.
+                    </p>
+                    
+                    <div class="mt-12 grid grid-cols-3 gap-4 max-w-md">
+                        <div class="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                            <i data-lucide="headphones" class="h-5 w-5 text-primary mb-3"></i>
+                            <div class="text-sm font-medium">Audio</div>
+                        </div>
+                        <div class="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                            <i data-lucide="lightbulb" class="h-5 w-5 text-primary mb-3"></i>
+                            <div class="text-sm font-medium">Iluminación</div>
+                        </div>
+                        <div class="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                            <i data-lucide="monitor" class="h-5 w-5 text-primary mb-3"></i>
+                            <div class="text-sm font-medium">LED</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-xs text-white/40">© 2026 Upgrade! Comunicación y Entretenimiento</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="forgotModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden transition-all duration-200">
+        <div class="w-full max-w-xl bg-background rounded-2xl border border-border shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            
+            <div class="px-6 pt-6 pb-4 border-b border-border">
+                <div class="flex items-start gap-4">
+                    <div class="h-11 w-11 rounded-xl flex items-center justify-center shrink-0 bg-primary/15 text-primary">
+                        <i data-lucide="key-round" class="h-5 w-5"></i>
+                    </div>
+                    <div class="flex-1 min-w-0 pr-6">
+                        <h2 class="text-lg font-semibold text-foreground">Recuperar contraseña</h2>
+                        <p class="mt-1 text-sm text-muted-foreground">Te enviaremos un enlace seguro a tu correo corporativo.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto px-6 py-5">
+                
+                <div id="modalFormState" class="space-y-4">
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-foreground/80">
+                            Correo electrónico <span class="text-destructive">*</span>
+                        </label>
+                        <div class="relative">
+                            <i data-lucide="mail" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"></i>
+                            <input type="email" id="forgotEmail" placeholder="nombre@empresa.com"
+                                class="flex h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary" />
+                        </div>
+                        <p class="text-xs text-muted-foreground">Debe coincidir con tu cuenta corporativa.</p>
+                    </div>
+
+                    <div class="rounded-lg bg-destructive/10 border border-destructive/30 px-3 py-2 text-sm text-destructive flex items-start gap-2">
+                        <i data-lucide="alert-triangle" class="h-4 w-4 mt-0.5 shrink-0"></i>
+                        <span>Si el correo existe en nuestro sistema, recibirás un enlace en los próximos minutos.</span>
+                    </div>
+                </div>
+
+                <div id="modalSuccessState" class="flex flex-col items-center text-center py-6 hidden">
+                    <div class="h-14 w-14 rounded-full bg-success/15 text-success flex items-center justify-center mb-3">
+                        <i data-lucide="check-circle-2" class="h-7 w-7"></i>
+                    </div>
+                    <h3 class="text-base font-semibold">Correo enviado</h3>
+                    <p class="text-sm text-muted-foreground mt-1 max-w-sm">Revisa tu bandeja de entrada y sigue las instrucciones. El enlace expira en 30 minutos.</p>
+                </div>
+
+            </div>
+
+            <div class="px-6 py-4 border-t border-border bg-muted/30 flex justify-between gap-2">
+                <button type="button" id="btnModalSecondary" class="btn px-4 py-2 text-sm rounded-md bg-transparent hover:bg-neutral-200/50 text-foreground">
+                    Cancelar
+                </button>
+                <button type="button" id="btnModalPrimary" class="btn px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 font-semibold shadow">
+                    Enviar enlace
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        $(document).ready(function() {
+            lucide.createIcons();
+            
+            // Validación de campos vacíos en el Login
+            $('#loginForm').on('submit', function(e) {
+                const usuario = $('#username').val().trim();
+                const password = $('#password').val().trim();
+
+                if (!usuario || !password) {
+                    e.preventDefault(); // Evita que el formulario haga la recarga de página
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Campos incompletos',
+                        text: 'Debes ingresar tu usuario y tu contraseña.',
+                        background: 'rgba(0, 0, 0, 0.85)',
+                        color: '#fff',
+                        confirmButtonColor: '#01d1ac',
+                        confirmButtonText: 'Aceptar'
+                    });
+                }
+            });
+
+            function showToast(message, type = 'success') {
+                const icon = type === 'success' ? 'check-circle-2' : 'alert-triangle';
+                const colorClass = type === 'success' ? 'border-success text-success bg-white shadow-lg' : 'border-destructive text-destructive bg-white shadow-lg';
+                
+                const toastHtml = `
+                    <div class="toast-item flex items-center gap-3 border rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto ${colorClass}">
+                        <i data-lucide="${icon}" class="h-4 w-4 shrink-0"></i>
+                        <span>${message}</span>
+                    </div>
+                `;
+                
+                const $toast = $(toastHtml).appendTo('#toast-container');
+                lucide.createIcons();
+                
+                setTimeout(() => $toast.removeClass('translate-y-2 opacity-0'), 10);
+                
+                setTimeout(() => {
+                    $toast.addClass('opacity-0 translate-y-[-10px]');
+                    setTimeout(() => $toast.remove(), 300);
+                }, 4000);
+            }
+
+            // Lógica para el checkbox personalizado
+            $('#customCheckbox').on('click', function(e) {
+                const $input = $(this).find('input[type="checkbox"]');
+                const isChecked = $input.prop('checked');
+                
+                $input.prop('checked', !isChecked);
+                if (!isChecked) {
+                    $(this).addClass('bg-primary text-primary-foreground');
+                    $(this).find('[data-lucide="check"]').removeClass('hidden');
+                } else {
+                    $(this).removeClass('bg-primary text-primary-foreground');
+                    $(this).find('[data-lucide="check"]').addClass('hidden');
+                }
+            });
+
+            // MODAL LOGIC (Forgot Password)
+            let isSent = false;
+
+            function openForgotModal() {
+                $('#forgotModal').removeClass('hidden flex').addClass('flex');
+                resetModalState();
+            }
+
+            function closeForgotModal() {
+                $('#forgotModal').removeClass('flex').addClass('hidden');
+            }
+
+            function resetModalState() {
+                isSent = false;
+                $('#modalFormState').show();
+                $('#modalSuccessState').hide();
+                $('#btnModalPrimary').show();
+                $('#btnModalSecondary').text('Cancelar');
+                $('#forgotEmail').val('');
+            }
+
+            $('#btnForgotTrigger').on('click', openForgotModal);
+            
+            $('#btnModalSecondary').on('click', function() {
+                closeForgotModal();
+            });
+
+            $('#forgotModal').on('click', function(e) {
+                if (e.target === this) closeForgotModal();
+            });
+
+            $('#btnModalPrimary').on('click', function() {
+                const email = $('#forgotEmail').val();
+                if (!email) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Correo inválido',
+                        text: 'Por favor ingresa un correo válido.',
+                        background: 'rgba(0, 0, 0, 0.85)',
+                        color: '#fff',
+                        confirmButtonColor: '#01d1ac',
+                        confirmButtonText: 'Aceptar'
+                    });
+                    return;
+                }
+
+                const $btn = $(this);
+                $btn.prop('disabled', true).html('<span class="animate-spin inline-block mr-2">⏳</span> Enviando...');
+
+                setTimeout(() => {
+                    $btn.prop('disabled', false).text('Enviar enlace');
+                    
+                    isSent = true;
+                    $('#modalFormState').hide();
+                    $('#modalSuccessState').removeClass('hidden').show();
+                    $btn.hide(); 
+                    $('#btnModalSecondary').text('Cerrar'); 
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Listo!',
+                        text: 'Enlace de recuperación enviado con éxito.',
+                        background: 'rgba(0, 0, 0, 0.85)',
+                        color: '#fff',
+                        confirmButtonColor: '#01d1ac',
+                        confirmButtonText: 'Aceptar'
+                    });
+                }, 1000);
+            });
+        });
+    </script>
+</body>
 </html>

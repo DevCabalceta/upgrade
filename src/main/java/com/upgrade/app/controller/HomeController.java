@@ -11,4 +11,10 @@ public class HomeController {
         // Esto le dice a Spring que busque el archivo index.html en la carpeta templates
         return "index"; 
     }
+
+    @GetMapping("/login")
+    public String login() {
+        // Esto le dice a Spring que busque el archivo login.html en la carpeta templates
+        return "login"; 
+    }
 }

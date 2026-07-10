@@ -1,19 +1,25 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content)">
-<head>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(pageTitle)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <title th:replace="${title}">Upgrade!</title>
-    
-    <meta name="description" content="Producción audiovisual, sonido profesional, iluminación, pantallas LED y alquiler de equipos para eventos.">
-    
-<!--    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>-->
+    <title th:text="${pageTitle != null ? pageTitle + ' — Upgrade' : 'Upgrade'}">Upgrade</title>
+
+    <script>
+        const STORAGE_KEY = 'upgrade-theme';
+        if (localStorage.getItem(STORAGE_KEY) === 'dark' || (!(STORAGE_KEY in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!--    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>-->
     <script th:src="@{/dist/js/tailwind.js}"></script>
 
     <style type="text/tailwindcss">
-      /*<![CDATA[*/
-      /* 1. Variantes personalizadas y Tema */
+        /* 1. Variantes personalizadas y Tema */
       @custom-variant dark (&:is(.dark *));
 
       @theme inline {
@@ -87,6 +93,14 @@
         --border: oklch(0.92 0.006 250);
         --input: oklch(0.92 0.006 250);
         --ring: oklch(0.79 0.16 175);
+        --sidebar: oklch(0.16 0.005 260);
+        --sidebar-foreground: oklch(0.96 0.005 220);
+        --sidebar-primary: oklch(0.79 0.16 175);
+        --sidebar-primary-foreground: oklch(0.15 0.02 260);
+        --sidebar-accent: oklch(0.22 0.005 260);
+        --sidebar-accent-foreground: oklch(0.99 0 0);
+        --sidebar-border: oklch(0.27 0.005 260);
+        --sidebar-ring: oklch(0.79 0.16 175);
       }
 
       .dark {
@@ -113,6 +127,14 @@
         --border: oklch(1 0 0 / 10%);
         --input: oklch(1 0 0 / 15%);
         --ring: oklch(0.82 0.17 175);
+        --sidebar: oklch(0.12 0.005 260);
+        --sidebar-foreground: oklch(0.96 0.005 220);
+        --sidebar-primary: oklch(0.82 0.17 175);
+        --sidebar-primary-foreground: oklch(0.14 0.01 260);
+        --sidebar-accent: oklch(0.20 0.005 260);
+        --sidebar-accent-foreground: oklch(0.98 0.003 220);
+        --sidebar-border: oklch(1 0 0 / 8%);
+        --sidebar-ring: oklch(0.82 0.17 175);
       }
 
       /* 3. Capas base y globales */
@@ -189,34 +211,22 @@
         .btn svg {
           @apply pointer-events-none size-4 shrink-0;
         }
+
         .btn-default { @apply bg-primary text-primary-foreground shadow hover:bg-primary/90; }
         .btn-destructive { @apply bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90; }
         .btn-outline { @apply border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground; }
         .btn-secondary { @apply bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80; }
         .btn-ghost { @apply hover:bg-accent hover:text-accent-foreground; }
         .btn-link { @apply text-primary underline-offset-4 hover:underline; }
+
         .btn-size-default { @apply h-9 px-4 py-2; }
         .btn-size-sm { @apply h-8 rounded-md px-3 text-xs; }
         .btn-size-lg { @apply h-10 rounded-md px-8; }
         .btn-size-icon { @apply h-9 w-9; }
       }
-      /*]]>*/
     </style>
-    
-    <link rel="stylesheet" th:href="@{/dist/css/styles.css}">
-    <script th:src="@{/dist/js/lucide.min.js}"></script>
+
     <script th:src="@{/dist/js/jquery-3.7.1.min.js}"></script>
+    <script th:src="@{/dist/js/lucide.min.js}"></script>
 </head>
-<body class="min-h-screen bg-background">
-    
-    <div th:replace="~{fragments/landingNav :: landingNav}"></div>
-
-    <main th:replace="${content}"></main>
-
-    <div th:replace="~{fragments/siteFooter :: siteFooter}"></div>
-    <div th:replace="~{fragments/floatingSocialBar :: floatingSocialBar}"></div>
-    <div th:replace="~{fragments/scrollToTop :: scrollToTop}"></div>
-
-    <script th:src="@{/dist/js/main.js}"></script>
-</body>
 </html>

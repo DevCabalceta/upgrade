@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html th:fragment="layout(pageTitle, activeMenu, content)" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{admin/fragments/head :: head(${pageTitle})}"></head>
+
+<body class="bg-background text-foreground flex min-h-screen overflow-x-hidden">
+
+    <div th:replace="~{admin/fragments/sidebar :: sidebar(${activeMenu})}"></div>
+    
+    <div id="main-wrapper" class="flex-1 flex flex-col min-w-0 transition-all duration-300 lg:pl-[256px]">
+        
+        <div th:replace="~{admin/fragments/topbar :: topbar(${pageTitle})}"></div>
+        
+        <main class="flex-1 p-4 lg:p-8">
+            <th:block th:replace="${content}"></th:block>
+        </main>
+        
+    </div>
+
+    <th:block th:replace="~{admin/fragments/footer :: scripts}"></th:block>
+
+</body>
+</html>
