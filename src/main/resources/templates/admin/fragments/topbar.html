@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
     <div th:fragment="topbar(pageTitle)">
         <header class="sticky top-0 z-30 h-16 w-full bg-background/85 backdrop-blur-xl border-b border-border">
@@ -50,13 +50,14 @@
                     </button>
 
                     <span class="h-6 w-px bg-border mx-1"></span>
-
+                    
                     <button id="user-menu-btn" class="flex items-center gap-2 rounded-full hover:bg-muted p-1 pr-2.5 transition hover:cursor-pointer outline-none">
-                        <div class="relative flex h-8 w-8 shrink-0 overflow-hidden rounded-full bg-gradient-to-tr from-primary to-yellow-400 items-center justify-center text-black font-bold text-xs">
+                        <div class="relative flex h-8 w-8 shrink-0 overflow-hidden rounded-full bg-gradient-to-tr from-primary to-yellow-400 items-center justify-center text-black font-bold text-xs"
+                             sec:authentication="principal.iniciales">
                             GC
                         </div>
                         <div class="hidden xl:block text-left">
-                            <div class="text-xs font-semibold leading-none">Gabriel Cabalceta</div>
+                            <div class="text-xs font-semibold leading-none" sec:authentication="principal.nombreCompleto">Gabriel Cabalceta</div>
                             <div class="text-[10px] text-muted-foreground leading-none mt-1">Administrador</div>
                         </div>
                     </button>
