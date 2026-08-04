@@ -1,16 +1,614 @@
 <!DOCTYPE html>
-<html th:replace="~{admin/layout/admin-layout :: layout('Clientes', 'clientes', ~{::#page-content})}" xmlns:th="http://www.thymeleaf.org">
+<html th:replace="~{admin/layout/admin-layout :: layout('Clientes', 'clientes', ~{::#page-content})}"
+      xmlns:th="http://www.thymeleaf.org">
 <body>
 
-    <div id="page-content">
-        
-        <h1 class="text-2xl font-bold mb-4">Módulo de Clientes</h1>
-        
-        <div class="glass-card p-6 rounded-xl">
-            <p>Aquí va la tabla o el contenido de tus Clientes...</p>
+<div id="page-content" class="space-y-6"
+     th:data-open-modal="${modalAbierto}"
+     th:data-success-message="${mensajeExito}">
+
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight md:text-3xl">Clientes</h1>
+            <p class="mt-1 text-sm text-muted-foreground">
+                Administra la base de clientes, su información de contacto y estado comercial.
+            </p>
         </div>
 
+        <div class="flex flex-wrap items-center gap-2">
+            <a th:href="@{/admin/clientes/exportar(buscar=${buscar},estado=${estado})}"
+               class="btn btn-outline btn-size-default">
+                <i data-lucide="download"></i>
+                Exportar
+            </a>
+            <button id="btn-new-client" type="button" class="btn btn-default btn-size-default font-semibold">
+                <i data-lucide="plus"></i>
+                Nuevo cliente
+            </button>
+        </div>
     </div>
+
+    <div class="overflow-visible rounded-2xl border border-border bg-card">
+        <div class="flex flex-col gap-3 border-b border-border p-4 md:flex-row md:items-center">
+            <form id="client-filter-form" th:action="@{/admin/clientes}" method="get"
+                  class="flex flex-1 flex-col gap-3 md:flex-row md:items-center">
+                <div class="relative w-full max-w-md flex-1">
+                    <i data-lucide="search"
+                       class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"></i>
+                    <input id="client-search" name="buscar" type="search" th:value="${buscar}"
+                           placeholder="Buscar por cliente, contacto, correo o identificación…"
+                           class="h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-3 text-sm outline-none transition focus:border-primary/50 focus:ring-1 focus:ring-primary/30">
+                </div>
+
+                <select id="client-status-filter" name="estado"
+                        class="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary/50">
+                    <option value="todos" th:selected="${estado == 'todos'}">Todos los estados</option>
+                    <option value="activos" th:selected="${estado == 'activos'}">Activos</option>
+                    <option value="inactivos" th:selected="${estado == 'inactivos'}">Inactivos</option>
+                </select>
+
+                <button type="submit" class="btn btn-outline btn-size-default">
+                    <i data-lucide="filter"></i>
+                    Aplicar
+                </button>
+
+                <a th:if="${!#strings.isEmpty(buscar) or estado != 'todos'}" th:href="@{/admin/clientes}"
+                   class="btn btn-ghost btn-size-default text-muted-foreground">
+                    <i data-lucide="x"></i>
+                    Limpiar
+                </a>
+            </form>
+
+            <div class="inline-flex h-9 shrink-0 items-center rounded-lg bg-muted p-1">
+                <button id="client-view-table" type="button" data-client-view="table"
+                        class="client-view-button flex h-7 items-center justify-center gap-1.5 rounded-md px-3 text-xs font-medium transition">
+                    <i data-lucide="list" class="h-3.5 w-3.5"></i>
+                    Tabla
+                </button>
+                <button id="client-view-cards" type="button" data-client-view="cards"
+                        class="client-view-button flex h-7 items-center justify-center gap-1.5 rounded-md px-3 text-xs font-medium transition">
+                    <i data-lucide="layout-grid" class="h-3.5 w-3.5"></i>
+                    Tarjetas
+                </button>
+            </div>
+        </div>
+
+        <div th:if="${clientes.hasContent()}">
+            <div id="client-table-view" class="overflow-x-auto">
+                <table class="w-full min-w-[920px] text-sm">
+                    <thead class="border-b border-border bg-muted/40">
+                    <tr class="text-left text-xs text-muted-foreground">
+                        <th class="px-6 py-3 font-semibold">Cliente</th>
+                        <th class="px-4 py-3 font-semibold">Contacto</th>
+                        <th class="px-4 py-3 font-semibold">Registro</th>
+                        <th class="px-4 py-3 font-semibold">Estado</th>
+                        <th class="px-5 py-3 text-right font-semibold">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="cliente : ${clientes.content}"
+                        class="client-record border-b border-border transition last:border-0 hover:bg-muted/30"
+                        th:data-client-id="${cliente.id}"
+                        th:data-client-tipo="${cliente.tipoCliente}"
+                        th:data-client-identificacion="${cliente.identificacion}"
+                        th:data-client-nombre="${cliente.nombre}"
+                        th:data-client-empresa="${cliente.empresa}"
+                        th:data-client-nombre-mostrado="${cliente.nombreMostrado}"
+                        th:data-client-correo="${cliente.correo}"
+                        th:data-client-telefono="${cliente.telefono}"
+                        th:data-client-direccion="${cliente.direccion}"
+                        th:data-client-segmento="${cliente.segmento}"
+                        th:data-client-condiciones-pago="${cliente.condicionesPago}"
+                        th:data-client-notas="${cliente.notas}"
+                        th:data-client-activo="${cliente.activo}"
+                        th:data-client-iniciales="${cliente.iniciales}"
+                        th:data-client-fecha="${#temporals.format(cliente.fechaRegistro, 'dd MMM yyyy')}"
+                        th:data-client-fecha-iso="${#temporals.format(cliente.fechaRegistro, 'yyyy-MM-dd HH:mm')}">
+                        <td class="px-6 py-4">
+                            <button type="button" class="js-client-detail flex max-w-full items-center gap-3 text-left">
+                                <span class="brand-gradient flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-black text-black"
+                                      th:text="${cliente.iniciales}">CL</span>
+                                <span class="min-w-0">
+                                    <span class="block max-w-72 truncate font-semibold text-foreground"
+                                          th:text="${cliente.nombreMostrado}">Empresa</span>
+                                    <span class="block max-w-72 truncate text-xs text-muted-foreground"
+                                          th:text="${cliente.correo}">correo@empresa.com</span>
+                                </span>
+                            </button>
+                        </td>
+                        <td class="px-4 py-4">
+                            <div class="font-medium" th:text="${cliente.nombre}">Contacto</div>
+                            <div class="mt-0.5 text-xs text-muted-foreground" th:text="${cliente.telefono}">Teléfono</div>
+                        </td>
+                        <td class="px-4 py-4 text-muted-foreground">
+                            <div th:text="${#temporals.format(cliente.fechaRegistro, 'dd MMM yyyy')}">01 ene 2026</div>
+                            <div class="mt-0.5 text-xs" th:text="${cliente.identificacion}">Identificación</div>
+                        </td>
+                        <td class="px-4 py-4">
+                            <span th:if="${cliente.activo}"
+                                  class="inline-flex rounded-md border border-emerald-500/30 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950/50 dark:text-emerald-400">
+                                Activo
+                            </span>
+                            <span th:unless="${cliente.activo}"
+                                  class="inline-flex rounded-md border border-red-500/30 bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:border-red-500/40 dark:bg-red-950/50 dark:text-red-400">
+                                Inactivo
+                            </span>
+                        </td>
+                        <td class="px-5 py-4">
+                            <div class="flex items-center justify-end gap-1">
+                                <button type="button" data-client-action="detail" title="Ver detalle"
+                                        class="js-client-action flex h-8 w-8 items-center justify-center rounded-lg border border-sky-300 bg-sky-50/40 text-sky-600 transition hover:bg-sky-50 hover:text-sky-700 dark:border-sky-900/80 dark:bg-sky-950/20 dark:text-sky-400">
+                                    <i data-lucide="eye" class="h-4 w-4"></i>
+                                </button>
+                                <button type="button" data-client-action="edit" title="Editar"
+                                        class="js-client-action flex h-8 w-8 items-center justify-center rounded-lg border border-amber-300 bg-amber-50/40 text-amber-600 transition hover:bg-amber-50 hover:text-amber-700 dark:border-amber-900/80 dark:bg-amber-950/20 dark:text-amber-400">
+                                    <i data-lucide="edit" class="h-4 w-4"></i>
+                                </button>
+                                <button type="button" data-client-action="history" title="Historial"
+                                        class="js-client-action flex h-8 w-8 items-center justify-center rounded-lg border border-indigo-300 bg-indigo-50/40 text-indigo-600 transition hover:bg-indigo-50 hover:text-indigo-700 dark:border-indigo-900/80 dark:bg-indigo-950/20 dark:text-indigo-400">
+                                    <i data-lucide="history" class="h-4 w-4"></i>
+                                </button>
+                                <button type="button" data-client-action="delete" title="Desactivar"
+                                        th:disabled="${!cliente.activo}"
+                                        class="js-client-action flex h-8 w-8 items-center justify-center rounded-lg border border-red-300 bg-red-50/40 text-red-600 transition hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-red-900/80 dark:bg-red-950/20 dark:text-red-400">
+                                    <i data-lucide="trash-2" class="h-4 w-4"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="client-cards-view" class="hidden grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-3">
+                <article th:each="cliente : ${clientes.content}"
+                         class="client-record group relative rounded-2xl border border-border bg-card p-5 transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg"
+                         th:data-client-id="${cliente.id}"
+                         th:data-client-tipo="${cliente.tipoCliente}"
+                         th:data-client-identificacion="${cliente.identificacion}"
+                         th:data-client-nombre="${cliente.nombre}"
+                         th:data-client-empresa="${cliente.empresa}"
+                         th:data-client-nombre-mostrado="${cliente.nombreMostrado}"
+                         th:data-client-correo="${cliente.correo}"
+                         th:data-client-telefono="${cliente.telefono}"
+                         th:data-client-direccion="${cliente.direccion}"
+                         th:data-client-segmento="${cliente.segmento}"
+                         th:data-client-condiciones-pago="${cliente.condicionesPago}"
+                         th:data-client-notas="${cliente.notas}"
+                         th:data-client-activo="${cliente.activo}"
+                         th:data-client-iniciales="${cliente.iniciales}"
+                         th:data-client-fecha="${#temporals.format(cliente.fechaRegistro, 'dd MMM yyyy')}"
+                         th:data-client-fecha-iso="${#temporals.format(cliente.fechaRegistro, 'yyyy-MM-dd HH:mm')}">
+                    <div class="flex items-start justify-between gap-3">
+                        <button type="button" class="js-client-detail brand-gradient flex h-12 w-12 items-center justify-center rounded-full text-sm font-black text-black"
+                                th:text="${cliente.iniciales}">CL</button>
+
+                        <div class="relative">
+                            <button type="button"
+                                    class="js-client-card-menu-toggle flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+                                    aria-expanded="false" aria-label="Abrir acciones">
+                                <i data-lucide="more-vertical" class="h-4 w-4"></i>
+                            </button>
+                            <div class="client-card-menu absolute right-0 top-9 z-30 hidden w-48 rounded-xl border border-border bg-popover p-1 text-popover-foreground shadow-xl">
+                                <button type="button" data-client-action="detail"
+                                        class="js-client-action flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-accent">
+                                    <i data-lucide="eye" class="h-4 w-4"></i>Ver detalle
+                                </button>
+                                <button type="button" data-client-action="edit"
+                                        class="js-client-action flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-accent">
+                                    <i data-lucide="edit" class="h-4 w-4"></i>Editar
+                                </button>
+                                <button type="button" data-client-action="history"
+                                        class="js-client-action flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-accent">
+                                    <i data-lucide="history" class="h-4 w-4"></i>Historial
+                                </button>
+                                <div class="my-1 h-px bg-border"></div>
+                                <button type="button" data-client-action="delete" th:disabled="${!cliente.activo}"
+                                        class="js-client-action flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-destructive hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-40">
+                                    <i data-lucide="trash-2" class="h-4 w-4"></i>Desactivar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="js-client-detail mt-4 block w-full text-left">
+                        <span class="block truncate font-semibold" th:text="${cliente.nombreMostrado}">Empresa</span>
+                        <span class="mt-0.5 block truncate text-xs text-muted-foreground" th:text="${cliente.nombre}">Contacto</span>
+                    </button>
+
+                    <div class="mt-4 space-y-2 text-xs text-muted-foreground">
+                        <div class="flex items-center gap-2 truncate">
+                            <i data-lucide="mail" class="h-3.5 w-3.5 shrink-0"></i>
+                            <span class="truncate" th:text="${cliente.correo}">correo@empresa.com</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="phone" class="h-3.5 w-3.5 shrink-0"></i>
+                            <span th:text="${cliente.telefono}">Teléfono</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex items-center justify-between border-t border-border pt-4">
+                        <span class="text-xs text-muted-foreground" th:text="${cliente.identificacion}">Identificación</span>
+                        <span th:if="${cliente.activo}"
+                              class="inline-flex rounded-md border border-emerald-500/30 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950/50 dark:text-emerald-400">Activo</span>
+                        <span th:unless="${cliente.activo}"
+                              class="inline-flex rounded-md border border-red-500/30 bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-700 dark:border-red-500/40 dark:bg-red-950/50 dark:text-red-400">Inactivo</span>
+                    </div>
+                </article>
+            </div>
+
+            <div class="flex flex-col gap-3 border-t border-border p-4 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    Mostrando
+                    <span th:text="${clientes.number * clientes.size + 1}">1</span>–<span
+                        th:text="${clientes.number * clientes.size + clientes.numberOfElements}">10</span>
+                    de <span th:text="${clientes.totalElements}">0</span> clientes
+                </div>
+
+                <nav th:if="${clientes.totalPages > 1}" class="flex flex-wrap items-center gap-1" aria-label="Paginación">
+                    <a th:if="${clientes.hasPrevious()}"
+                       th:href="@{/admin/clientes(page=${clientes.number - 1},buscar=${buscar},estado=${estado})}"
+                       class="btn btn-outline btn-size-sm">Anterior</a>
+
+                    <a th:each="numero : ${paginasVisibles}"
+                       th:href="@{/admin/clientes(page=${numero},buscar=${buscar},estado=${estado})}"
+                       th:text="${numero + 1}"
+                       th:class="${numero == clientes.number}
+                            ? 'inline-flex h-8 min-w-8 items-center justify-center rounded-md bg-primary px-2 text-xs font-semibold text-primary-foreground shadow'
+                            : 'inline-flex h-8 min-w-8 items-center justify-center rounded-md border border-input bg-background px-2 text-xs font-medium hover:bg-accent'">1</a>
+
+                    <a th:if="${clientes.hasNext()}"
+                       th:href="@{/admin/clientes(page=${clientes.number + 1},buscar=${buscar},estado=${estado})}"
+                       class="btn btn-outline btn-size-sm">Siguiente</a>
+                </nav>
+            </div>
+        </div>
+
+        <div th:unless="${clientes.hasContent()}" class="px-6 py-16 text-center">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                <i data-lucide="user-search" class="h-6 w-6"></i>
+            </div>
+            <h3 class="mt-4 font-semibold">No se encontraron clientes</h3>
+            <p class="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+                No existen registros que coincidan con la búsqueda y el estado seleccionados.
+            </p>
+            <a th:href="@{/admin/clientes}" class="btn btn-outline btn-size-default mt-4">Limpiar filtros</a>
+        </div>
+    </div>
+
+    <!-- Modal nuevo cliente -->
+    <div id="modal-new-client" class="client-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div class="client-modal-panel flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6">
+                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                    <i data-lucide="user-plus" class="h-5 w-5"></i>
+                </div>
+                <div class="min-w-0 flex-1 pr-8">
+                    <h2 class="text-lg font-semibold">Nuevo cliente</h2>
+                    <p class="mt-1 text-sm text-muted-foreground">Registra los datos comerciales y de contacto.</p>
+                </div>
+                <button type="button" class="js-client-close-modal absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent">
+                    <i data-lucide="x" class="h-4 w-4"></i>
+                </button>
+            </div>
+
+            <form id="new-client-form" th:action="@{/admin/clientes}" th:object="${nuevoCliente}" method="post"
+                  class="flex min-h-0 flex-1 flex-col" novalidate>
+                <input type="hidden" name="buscar" th:value="${buscar}">
+                <input type="hidden" name="estado" th:value="${estado}">
+                <input type="hidden" name="page" th:value="${clientes.number}">
+                <div class="flex-1 space-y-5 overflow-y-auto px-6 py-5">
+                    <div>
+                        <div class="mb-3 flex items-center gap-2">
+                            <span class="h-1 w-1 rounded-full bg-primary"></span>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Identificación</h3>
+                            <span class="h-px flex-1 bg-border"></span>
+                        </div>
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div class="space-y-1.5">
+                                <label for="new-client-type" class="text-xs font-semibold">Tipo de cliente <span class="text-destructive">*</span></label>
+                                <select id="new-client-type" th:field="*{tipoCliente}" required
+                                        class="client-form-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                                    <option th:each="tipo : ${tiposCliente}" th:value="${tipo}" th:text="${tipo.etiqueta}">Empresa</option>
+                                </select>
+                                <p th:if="${#fields.hasErrors('tipoCliente')}" th:errors="*{tipoCliente}" class="text-xs text-destructive"></p>
+                            </div>
+                            <div class="space-y-1.5">
+                                <label for="new-client-identification" class="text-xs font-semibold">Identificación tributaria <span class="text-destructive">*</span></label>
+                                <input id="new-client-identification" th:field="*{identificacion}" required maxlength="50" placeholder="Cédula jurídica o física"
+                                       class="client-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                                <p th:if="${#fields.hasErrors('identificacion')}" th:errors="*{identificacion}" class="text-xs text-destructive"></p>
+                            </div>
+                            <div class="space-y-1.5">
+                                <label for="new-client-company" class="text-xs font-semibold">Empresa / Razón social</label>
+                                <input id="new-client-company" th:field="*{empresa}" maxlength="150" placeholder="Ej. Eventos CR S.A."
+                                       class="client-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                                <p th:if="${#fields.hasErrors('empresa')}" th:errors="*{empresa}" class="text-xs text-destructive"></p>
+                            </div>
+                            <div class="space-y-1.5">
+                                <label for="new-client-name" class="text-xs font-semibold">Persona de contacto <span class="text-destructive">*</span></label>
+                                <input id="new-client-name" th:field="*{nombre}" required maxlength="150" placeholder="Nombre completo"
+                                       class="client-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                                <p th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="text-xs text-destructive"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="mb-3 flex items-center gap-2">
+                            <span class="h-1 w-1 rounded-full bg-primary"></span>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Contacto y condiciones</h3>
+                            <span class="h-px flex-1 bg-border"></span>
+                        </div>
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div class="space-y-1.5">
+                                <label for="new-client-email" class="text-xs font-semibold">Correo <span class="text-destructive">*</span></label>
+                                <input id="new-client-email" th:field="*{correo}" type="email" required maxlength="100" placeholder="contacto@empresa.com"
+                                       class="client-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                                <p th:if="${#fields.hasErrors('correo')}" th:errors="*{correo}" class="text-xs text-destructive"></p>
+                            </div>
+                            <div class="space-y-1.5">
+                                <label for="new-client-phone" class="text-xs font-semibold">Teléfono <span class="text-destructive">*</span></label>
+                                <input id="new-client-phone" th:field="*{telefono}" type="tel" required maxlength="30" placeholder="+506 8888-1234"
+                                       class="client-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                                <p th:if="${#fields.hasErrors('telefono')}" th:errors="*{telefono}" class="text-xs text-destructive"></p>
+                            </div>
+                            <div class="space-y-1.5 sm:col-span-2">
+                                <label for="new-client-address" class="text-xs font-semibold">Dirección</label>
+                                <input id="new-client-address" th:field="*{direccion}" maxlength="255" placeholder="Provincia, cantón y dirección exacta"
+                                       class="client-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                                <p th:if="${#fields.hasErrors('direccion')}" th:errors="*{direccion}" class="text-xs text-destructive"></p>
+                            </div>
+                            <div class="space-y-1.5">
+                                <label for="new-client-segment" class="text-xs font-semibold">Segmento</label>
+                                <select id="new-client-segment" th:field="*{segmento}"
+                                        class="client-form-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                                    <option value="">Sin definir</option>
+                                    <option value="Premium">Premium</option>
+                                    <option value="Estándar">Estándar</option>
+                                    <option value="Corporativo">Corporativo</option>
+                                </select>
+                            </div>
+                            <div class="space-y-1.5">
+                                <label for="new-client-payment" class="text-xs font-semibold">Condiciones de pago</label>
+                                <input id="new-client-payment" th:field="*{condicionesPago}" maxlength="100" placeholder="Ej. 30 días"
+                                       class="client-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                            </div>
+                            <div class="space-y-1.5 sm:col-span-2">
+                                <label for="new-client-notes" class="text-xs font-semibold">Notas internas</label>
+                                <textarea id="new-client-notes" th:field="*{notas}" rows="3" maxlength="2000" placeholder="Información visible únicamente para el equipo."
+                                          class="client-form-control w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"></textarea>
+                                <p th:if="${#fields.hasErrors('notas')}" th:errors="*{notas}" class="text-xs text-destructive"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-3">
+                        <input th:field="*{activo}" type="checkbox" class="mt-0.5 h-4 w-4 accent-[var(--primary)]">
+                        <span>
+                            <span class="block text-sm font-semibold">Cliente activo</span>
+                            <span class="block text-xs text-muted-foreground">Podrá utilizarse en futuras cotizaciones y eventos.</span>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="flex flex-col-reverse gap-2 border-t border-border bg-muted/30 px-6 py-4 sm:flex-row sm:justify-between">
+                    <button type="button" class="js-client-close-modal btn btn-ghost btn-size-default">Cancelar</button>
+                    <button type="submit" class="btn btn-default btn-size-default font-semibold">
+                        <i data-lucide="save"></i>Crear cliente
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal editar cliente -->
+    <div id="modal-edit-client" class="client-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div class="client-modal-panel flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6">
+                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                    <i data-lucide="user-cog" class="h-5 w-5"></i>
+                </div>
+                <div class="min-w-0 flex-1 pr-8">
+                    <h2 class="text-lg font-semibold">Editar cliente</h2>
+                    <p id="edit-client-subtitle" class="mt-1 text-sm text-muted-foreground">Actualiza la información seleccionada.</p>
+                </div>
+                <button type="button" class="js-client-close-modal absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent">
+                    <i data-lucide="x" class="h-4 w-4"></i>
+                </button>
+            </div>
+
+            <form id="edit-client-form" th:action="@{/admin/clientes/editar}" th:object="${editarCliente}" method="post"
+                  class="flex min-h-0 flex-1 flex-col" novalidate>
+                <input id="edit-client-id" th:field="*{id}" type="hidden">
+                <input type="hidden" name="buscar" th:value="${buscar}">
+                <input type="hidden" name="estado" th:value="${estado}">
+                <input type="hidden" name="page" th:value="${clientes.number}">
+                <div class="flex-1 space-y-5 overflow-y-auto px-6 py-5">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="space-y-1.5">
+                            <label for="edit-client-type" class="text-xs font-semibold">Tipo de cliente <span class="text-destructive">*</span></label>
+                            <select id="edit-client-type" th:field="*{tipoCliente}" required
+                                    class="client-form-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                                <option th:each="tipo : ${tiposCliente}" th:value="${tipo}" th:text="${tipo.etiqueta}">Empresa</option>
+                            </select>
+                            <p th:if="${#fields.hasErrors('tipoCliente')}" th:errors="*{tipoCliente}" class="text-xs text-destructive"></p>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label for="edit-client-identification" class="text-xs font-semibold">Identificación <span class="text-destructive">*</span></label>
+                            <input id="edit-client-identification" th:field="*{identificacion}" required maxlength="50"
+                                   class="client-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                            <p th:if="${#fields.hasErrors('identificacion')}" th:errors="*{identificacion}" class="text-xs text-destructive"></p>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label for="edit-client-company" class="text-xs font-semibold">Empresa / Razón social</label>
+                            <input id="edit-client-company" th:field="*{empresa}" maxlength="150"
+                                   class="client-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                            <p th:if="${#fields.hasErrors('empresa')}" th:errors="*{empresa}" class="text-xs text-destructive"></p>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label for="edit-client-name" class="text-xs font-semibold">Persona de contacto <span class="text-destructive">*</span></label>
+                            <input id="edit-client-name" th:field="*{nombre}" required maxlength="150"
+                                   class="client-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                            <p th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="text-xs text-destructive"></p>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label for="edit-client-email" class="text-xs font-semibold">Correo <span class="text-destructive">*</span></label>
+                            <input id="edit-client-email" th:field="*{correo}" type="email" required maxlength="100"
+                                   class="client-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                            <p th:if="${#fields.hasErrors('correo')}" th:errors="*{correo}" class="text-xs text-destructive"></p>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label for="edit-client-phone" class="text-xs font-semibold">Teléfono <span class="text-destructive">*</span></label>
+                            <input id="edit-client-phone" th:field="*{telefono}" type="tel" required maxlength="30"
+                                   class="client-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                            <p th:if="${#fields.hasErrors('telefono')}" th:errors="*{telefono}" class="text-xs text-destructive"></p>
+                        </div>
+                        <div class="space-y-1.5 sm:col-span-2">
+                            <label for="edit-client-address" class="text-xs font-semibold">Dirección</label>
+                            <input id="edit-client-address" th:field="*{direccion}" maxlength="255"
+                                   class="client-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                            <p th:if="${#fields.hasErrors('direccion')}" th:errors="*{direccion}" class="text-xs text-destructive"></p>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label for="edit-client-segment" class="text-xs font-semibold">Segmento</label>
+                            <select id="edit-client-segment" th:field="*{segmento}"
+                                    class="client-form-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                                <option value="">Sin definir</option>
+                                <option value="Premium">Premium</option>
+                                <option value="Estándar">Estándar</option>
+                                <option value="Corporativo">Corporativo</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label for="edit-client-payment" class="text-xs font-semibold">Condiciones de pago</label>
+                            <input id="edit-client-payment" th:field="*{condicionesPago}" maxlength="100"
+                                   class="client-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                        </div>
+                        <div class="space-y-1.5 sm:col-span-2">
+                            <label for="edit-client-notes" class="text-xs font-semibold">Notas internas</label>
+                            <textarea id="edit-client-notes" th:field="*{notas}" rows="3" maxlength="2000"
+                                      class="client-form-control w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"></textarea>
+                            <p th:if="${#fields.hasErrors('notas')}" th:errors="*{notas}" class="text-xs text-destructive"></p>
+                        </div>
+                    </div>
+
+                    <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-3">
+                        <input id="edit-client-active" th:field="*{activo}" type="checkbox" class="mt-0.5 h-4 w-4 accent-[var(--primary)]">
+                        <span>
+                            <span class="block text-sm font-semibold">Cliente activo</span>
+                            <span class="block text-xs text-muted-foreground">Desmarcarlo evita usarlo en nuevas operaciones.</span>
+                        </span>
+                    </label>
+
+                    <div th:if="${#fields.hasGlobalErrors()}" class="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                        <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col-reverse gap-2 border-t border-border bg-muted/30 px-6 py-4 sm:flex-row sm:justify-between">
+                    <button type="button" class="js-client-close-modal btn btn-ghost btn-size-default">Cancelar</button>
+                    <button type="submit" class="btn btn-default btn-size-default font-semibold">
+                        <i data-lucide="save"></i>Guardar cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal detalle -->
+    <div id="modal-client-detail" class="client-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div class="client-modal-panel flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6">
+                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary"><i data-lucide="eye" class="h-5 w-5"></i></div>
+                <div class="flex-1"><h2 class="text-lg font-semibold">Detalle del cliente</h2></div>
+                <button type="button" class="js-client-close-modal absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent"><i data-lucide="x" class="h-4 w-4"></i></button>
+            </div>
+            <div class="flex-1 space-y-5 overflow-y-auto px-6 py-5">
+                <div class="flex items-start gap-4 rounded-xl border border-border bg-muted/40 p-4">
+                    <div id="detail-client-avatar" class="brand-gradient flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-lg font-black text-black">CL</div>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h3 id="detail-client-title" class="truncate text-lg font-bold">Cliente</h3>
+                            <span id="detail-client-status" class="inline-flex rounded-md border px-2 py-0.5 text-xs font-semibold"></span>
+                        </div>
+                        <p id="detail-client-subtitle" class="mt-1 text-xs text-muted-foreground"></p>
+                    </div>
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <div class="flex items-center gap-3 rounded-lg border border-border p-3"><i data-lucide="user" class="h-4 w-4 text-primary"></i><div><div class="text-[10px] uppercase tracking-wider text-muted-foreground">Contacto</div><div id="detail-client-name" class="text-sm font-medium"></div></div></div>
+                    <div class="flex items-center gap-3 rounded-lg border border-border p-3"><i data-lucide="mail" class="h-4 w-4 text-primary"></i><div class="min-w-0"><div class="text-[10px] uppercase tracking-wider text-muted-foreground">Correo</div><div id="detail-client-email" class="truncate text-sm font-medium"></div></div></div>
+                    <div class="flex items-center gap-3 rounded-lg border border-border p-3"><i data-lucide="phone" class="h-4 w-4 text-primary"></i><div><div class="text-[10px] uppercase tracking-wider text-muted-foreground">Teléfono</div><div id="detail-client-phone" class="text-sm font-medium"></div></div></div>
+                    <div class="flex items-center gap-3 rounded-lg border border-border p-3"><i data-lucide="map-pin" class="h-4 w-4 text-primary"></i><div><div class="text-[10px] uppercase tracking-wider text-muted-foreground">Dirección</div><div id="detail-client-address" class="text-sm font-medium"></div></div></div>
+                    <div class="flex items-center gap-3 rounded-lg border border-border p-3"><i data-lucide="badge-check" class="h-4 w-4 text-primary"></i><div><div class="text-[10px] uppercase tracking-wider text-muted-foreground">Segmento</div><div id="detail-client-segment" class="text-sm font-medium"></div></div></div>
+                    <div class="flex items-center gap-3 rounded-lg border border-border p-3"><i data-lucide="calendar" class="h-4 w-4 text-primary"></i><div><div class="text-[10px] uppercase tracking-wider text-muted-foreground">Registrado</div><div id="detail-client-date" class="text-sm font-medium"></div></div></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="rounded-lg border border-border p-3"><div class="text-[10px] uppercase tracking-wider text-muted-foreground">Eventos</div><div class="mt-1 text-xl font-bold">0</div><div class="text-[10px] text-muted-foreground">Disponible al implementar Calendario</div></div>
+                    <div class="rounded-lg border border-border p-3"><div class="text-[10px] uppercase tracking-wider text-muted-foreground">Facturado</div><div class="mt-1 text-xl font-bold">₡0</div><div class="text-[10px] text-muted-foreground">Disponible al implementar Facturación</div></div>
+                </div>
+
+                <div class="rounded-lg border border-border p-3"><div class="text-[10px] uppercase tracking-wider text-muted-foreground">Notas internas</div><p id="detail-client-notes" class="mt-1 whitespace-pre-line text-sm text-muted-foreground"></p></div>
+            </div>
+            <div class="border-t border-border bg-muted/30 px-6 py-4 text-right"><button type="button" class="js-client-close-modal btn btn-outline btn-size-default">Cerrar</button></div>
+        </div>
+    </div>
+
+    <!-- Modal historial -->
+    <div id="modal-client-history" class="client-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div class="client-modal-panel flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6">
+                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary"><i data-lucide="history" class="h-5 w-5"></i></div>
+                <div class="flex-1"><h2 class="text-lg font-semibold">Historial del cliente</h2><p id="history-client-subtitle" class="mt-1 text-sm text-muted-foreground"></p></div>
+                <button type="button" class="js-client-close-modal absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent"><i data-lucide="x" class="h-4 w-4"></i></button>
+            </div>
+            <div class="flex-1 overflow-y-auto px-6 py-6">
+                <div class="relative border-l-2 border-border pl-6">
+                    <span class="absolute -left-[7px] top-1 h-3 w-3 rounded-full bg-primary ring-4 ring-background"></span>
+                    <div class="font-medium text-sm">Cliente registrado en el sistema</div>
+                    <div id="history-client-date" class="mt-1 text-xs text-muted-foreground"></div>
+                    <span class="mt-2 inline-flex rounded-md border px-2 py-0.5 text-[10px] font-semibold">Sistema</span>
+                </div>
+                <div class="mt-8 rounded-xl border border-dashed border-border p-5 text-center">
+                    <i data-lucide="clock-3" class="mx-auto h-6 w-6 text-muted-foreground"></i>
+                    <p class="mt-2 text-sm font-medium">No hay más interacciones registradas</p>
+                    <p class="mt-1 text-xs text-muted-foreground">Las cotizaciones, eventos y servicios aparecerán aquí al implementar sus módulos.</p>
+                </div>
+            </div>
+            <div class="border-t border-border bg-muted/30 px-6 py-4 text-right"><button type="button" class="js-client-close-modal btn btn-outline btn-size-default">Cerrar</button></div>
+        </div>
+    </div>
+
+    <!-- Modal desactivar -->
+    <div id="modal-delete-client" class="client-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div class="client-modal-panel flex max-h-[92vh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6">
+                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-destructive/15 text-destructive"><i data-lucide="alert-triangle" class="h-5 w-5"></i></div>
+                <div class="flex-1"><h2 class="text-lg font-semibold">Desactivar cliente</h2><p class="mt-1 text-sm text-muted-foreground">El registro y sus relaciones se conservarán.</p></div>
+                <button type="button" class="js-client-close-modal absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent"><i data-lucide="x" class="h-4 w-4"></i></button>
+            </div>
+            <form id="delete-client-form" th:action="@{/admin/clientes/eliminar}" method="post">
+                <input id="delete-client-id" name="id" type="hidden">
+                <input type="hidden" name="buscar" th:value="${buscar}">
+                <input type="hidden" name="estado" th:value="${estado}">
+                <input type="hidden" name="page" th:value="${clientes.number}">
+                <div class="px-6 py-5">
+                    <p class="text-sm text-muted-foreground">Se desactivará <strong id="delete-client-name" class="text-foreground">el cliente</strong>. No podrá utilizarse en operaciones nuevas, pero su historial permanecerá intacto.</p>
+                    <div class="mt-4 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-xs text-destructive">Esta operación puede revertirse editando nuevamente el estado del cliente.</div>
+                </div>
+                <div class="flex justify-between gap-2 border-t border-border bg-muted/30 px-6 py-4">
+                    <button type="button" class="js-client-close-modal btn btn-ghost btn-size-default">Cancelar</button>
+                    <button type="submit" class="btn btn-destructive btn-size-default font-semibold">Desactivar cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script th:src="@{/dist/js/clientes.js}"></script>
+</div>
 
 </body>
 </html>
