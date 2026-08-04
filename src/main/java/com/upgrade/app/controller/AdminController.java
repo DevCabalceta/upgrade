@@ -65,11 +65,6 @@ public class AdminController {
         return "admin/galeria";
     }
     
-    @GetMapping("/preguntas")
-    public String preguntas() {
-        return "admin/preguntas";
-    }
-
     @GetMapping("/configuracion")
     public String configuracion() {
         return "admin/configuracion";

@@ -1,16 +1,252 @@
 <!DOCTYPE html>
-<html th:replace="~{admin/layout/admin-layout :: layout('Preguntas frecuentes', 'preguntas', ~{::#page-content})}" xmlns:th="http://www.thymeleaf.org">
+<html th:replace="~{admin/layout/admin-layout :: layout('Preguntas frecuentes', 'preguntas', ~{::#page-content})}"
+      xmlns:th="http://www.thymeleaf.org">
 <body>
 
-    <div id="page-content">
-        
-        <h1 class="text-2xl font-bold mb-4">Módulo de Preguntas</h1>
-        
-        <div class="glass-card p-6 rounded-xl">
-            <p>Aquí va la tabla o el contenido del Configuración...</p>
+<div id="page-content" class="space-y-6"
+     th:data-open-modal="${modalAbierto}"
+     th:data-success-message="${mensajeExito}">
+
+    <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight md:text-3xl">Preguntas frecuentes</h1>
+            <p class="mt-1 text-sm text-muted-foreground">
+                Administra las preguntas y respuestas publicadas en la landing page.
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <a th:href="@{/#faq}" target="_blank" rel="noopener" class="btn btn-outline btn-size-default">
+                <i data-lucide="monitor"></i>Vista landing
+            </a>
+            <button id="btn-new-faq" type="button" class="btn btn-default btn-size-default font-semibold">
+                <i data-lucide="plus"></i>Nueva pregunta
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div class="rounded-2xl border border-border bg-card p-5">
+            <div class="flex items-start justify-between">
+                <div class="text-xs text-muted-foreground">Total de preguntas</div>
+                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><i data-lucide="circle-help" class="h-4 w-4"></i></div>
+            </div>
+            <div class="mt-2 text-2xl font-bold" th:text="${estadisticas.total}">0</div>
+        </div>
+        <div class="rounded-2xl border border-border bg-card p-5">
+            <div class="flex items-start justify-between">
+                <div class="text-xs text-muted-foreground">Publicadas</div>
+                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500"><i data-lucide="circle-check-big" class="h-4 w-4"></i></div>
+            </div>
+            <div class="mt-2 text-2xl font-bold text-emerald-500" th:text="${estadisticas.publicadas}">0</div>
+        </div>
+        <div class="rounded-2xl border border-border bg-card p-5">
+            <div class="flex items-start justify-between">
+                <div class="text-xs text-muted-foreground">Ocultas</div>
+                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500"><i data-lucide="eye-off" class="h-4 w-4"></i></div>
+            </div>
+            <div class="mt-2 text-2xl font-bold text-amber-500" th:text="${estadisticas.ocultas}">0</div>
+        </div>
+        <div class="rounded-2xl border border-border bg-card p-5">
+            <div class="flex items-start justify-between">
+                <div class="text-xs text-muted-foreground">Categorías utilizadas</div>
+                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-muted-foreground"><i data-lucide="tags" class="h-4 w-4"></i></div>
+            </div>
+            <div class="mt-2 text-2xl font-bold" th:text="${estadisticas.categorias}">0</div>
+        </div>
+    </div>
+
+    <div class="rounded-2xl border border-border bg-card">
+        <form id="faq-filter-form" th:action="@{/admin/preguntas}" method="get">
+            <div class="flex flex-col gap-3 border-b border-border p-4 lg:flex-row lg:items-center">
+                <div class="relative max-w-md flex-1">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"></i>
+                    <input id="faq-search" name="buscar" type="search" th:value="${buscar}"
+                           placeholder="Buscar pregunta o respuesta…"
+                           class="h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-3 text-sm shadow-sm outline-none focus:ring-1 focus:ring-ring">
+                </div>
+                <button id="btn-toggle-faq-filters" type="button" class="btn btn-outline btn-size-default lg:ml-auto">
+                    <i data-lucide="list-filter"></i>Filtros
+                </button>
+            </div>
+
+            <div id="faq-filters"
+                 th:classappend="${estado != 'todas' or !#strings.isEmpty(categoriaFiltro)} ? 'grid' : 'hidden'"
+                 class="grid-cols-1 gap-3 border-b border-border bg-muted/20 p-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto]">
+                <select id="faq-status-filter" name="estado"
+                        class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm outline-none focus:ring-1 focus:ring-ring">
+                    <option value="todas" th:selected="${estado == 'todas'}">Todos los estados</option>
+                    <option value="publicadas" th:selected="${estado == 'publicadas'}">Publicadas</option>
+                    <option value="ocultas" th:selected="${estado == 'ocultas'}">Ocultas</option>
+                </select>
+                <select id="faq-category-filter" name="categoria"
+                        class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm outline-none focus:ring-1 focus:ring-ring">
+                    <option value="">Todas las categorías</option>
+                    <option th:each="categoria : ${categoriasPregunta}"
+                            th:value="${categoria.name()}" th:text="${categoria.etiqueta}"
+                            th:selected="${categoriaFiltro == categoria.name()}">General</option>
+                </select>
+                <a th:href="@{/admin/preguntas}" class="btn btn-outline btn-size-default">
+                    <i data-lucide="rotate-ccw"></i>Limpiar
+                </a>
+            </div>
+        </form>
+
+        <div th:if="${not #lists.isEmpty(preguntas)}" class="overflow-x-auto">
+            <table class="w-full min-w-[1120px] text-sm">
+                <thead class="border-b border-border bg-muted/50">
+                <tr class="text-left text-xs text-muted-foreground">
+                    <th class="w-[7%] px-6 py-3.5 font-semibold">Orden</th>
+                    <th class="w-[38%] px-4 py-3.5 font-semibold">Pregunta</th>
+                    <th class="w-[13%] px-4 py-3.5 font-semibold">Categoría</th>
+                    <th class="w-[11%] px-4 py-3.5 font-semibold">Estado</th>
+                    <th class="w-[13%] px-4 py-3.5 font-semibold">Actualización</th>
+                    <th class="w-[18%] px-4 py-3.5 text-right font-semibold">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="pregunta : ${preguntas}"
+                    class="faq-record border-b border-border transition last:border-0 hover:bg-muted/30"
+                    th:data-faq-id="${pregunta.id}"
+                    th:data-faq-pregunta="${pregunta.pregunta}"
+                    th:data-faq-respuesta="${pregunta.respuesta}"
+                    th:data-faq-categoria="${pregunta.categoria}"
+                    th:data-faq-categoria-etiqueta="${pregunta.categoria.etiqueta}"
+                    th:data-faq-activa="${pregunta.activa}"
+                    th:data-faq-orden="${pregunta.orden}"
+                    th:data-faq-actualizacion="${#temporals.format(pregunta.fechaActualizacion, 'dd MMM yyyy, HH:mm')}">
+                    <td class="px-6 py-4">
+                        <span class="inline-flex h-8 min-w-8 items-center justify-center rounded-lg bg-muted px-2 font-mono text-xs font-bold text-muted-foreground"
+                              th:text="${#numbers.formatInteger(pregunta.orden, 2)}">01</span>
+                    </td>
+                    <td class="px-4 py-4">
+                        <button type="button" class="js-faq-preview max-w-xl text-left">
+                            <span class="block font-medium" th:text="${pregunta.pregunta}">Pregunta</span>
+                            <span class="mt-1 block max-w-xl truncate text-xs text-muted-foreground" th:text="${pregunta.respuesta}">Respuesta</span>
+                        </button>
+                    </td>
+                    <td class="px-4 py-4">
+                        <span class="inline-flex rounded-md border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary"
+                              th:text="${pregunta.categoria.etiqueta}">General</span>
+                    </td>
+                    <td class="px-4 py-4">
+                        <span th:if="${pregunta.activa}" class="inline-flex rounded-md border border-emerald-500/30 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400">Publicada</span>
+                        <span th:unless="${pregunta.activa}" class="inline-flex rounded-md border border-amber-500/30 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-950/50 dark:text-amber-400">Oculta</span>
+                    </td>
+                    <td class="whitespace-nowrap px-4 py-4 text-xs text-muted-foreground"
+                        th:text="${#temporals.format(pregunta.fechaActualizacion, 'dd MMM yyyy')}">01 ene 2026</td>
+                    <td class="px-4 py-4">
+                        <div class="flex items-center justify-end gap-1">
+                            <button type="button" data-faq-action="preview" title="Vista previa" class="js-faq-action flex h-8 w-8 items-center justify-center rounded-lg border border-sky-300 bg-sky-50/40 text-sky-600 hover:bg-sky-100 dark:border-sky-900 dark:bg-sky-950/20 dark:text-sky-400"><i data-lucide="eye" class="h-4 w-4"></i></button>
+                            <button type="button" data-faq-action="edit" title="Editar" class="js-faq-action flex h-8 w-8 items-center justify-center rounded-lg border border-amber-300 bg-amber-50/40 text-amber-600 hover:bg-amber-100 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-400"><i data-lucide="pencil" class="h-4 w-4"></i></button>
+
+                            <form th:action="@{/admin/preguntas/subir}" method="post" class="inline-flex">
+                                <input type="hidden" name="id" th:value="${pregunta.id}"><input type="hidden" name="buscar" th:value="${buscar}"><input type="hidden" name="estado" th:value="${estado}"><input type="hidden" name="categoria" th:value="${categoriaFiltro}">
+                                <button type="submit" title="Subir posición" class="flex h-8 w-8 items-center justify-center rounded-lg border border-indigo-300 bg-indigo-50/40 text-indigo-600 hover:bg-indigo-100 disabled:opacity-35 dark:border-indigo-900 dark:bg-indigo-950/20 dark:text-indigo-400" th:disabled="${pregunta.orden == 1}"><i data-lucide="arrow-up" class="h-4 w-4"></i></button>
+                            </form>
+                            <form th:action="@{/admin/preguntas/bajar}" method="post" class="inline-flex">
+                                <input type="hidden" name="id" th:value="${pregunta.id}"><input type="hidden" name="buscar" th:value="${buscar}"><input type="hidden" name="estado" th:value="${estado}"><input type="hidden" name="categoria" th:value="${categoriaFiltro}">
+                                <button type="submit" title="Bajar posición" class="flex h-8 w-8 items-center justify-center rounded-lg border border-indigo-300 bg-indigo-50/40 text-indigo-600 hover:bg-indigo-100 disabled:opacity-35 dark:border-indigo-900 dark:bg-indigo-950/20 dark:text-indigo-400" th:disabled="${pregunta.orden == estadisticas.total}"><i data-lucide="arrow-down" class="h-4 w-4"></i></button>
+                            </form>
+                            <form th:action="@{/admin/preguntas/publicacion}" method="post" class="js-faq-toggle-form inline-flex">
+                                <input type="hidden" name="id" th:value="${pregunta.id}"><input type="hidden" name="buscar" th:value="${buscar}"><input type="hidden" name="estado" th:value="${estado}"><input type="hidden" name="categoria" th:value="${categoriaFiltro}">
+                                <button type="submit" th:title="${pregunta.activa ? 'Ocultar de la landing' : 'Publicar en la landing'}"
+                                        th:classappend="${pregunta.activa} ? 'border-emerald-300 bg-emerald-50/40 text-emerald-600 dark:border-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-400' : 'border-gray-300 bg-gray-50/40 text-gray-500 dark:border-gray-700 dark:bg-gray-900/20 dark:text-gray-400'"
+                                        class="flex h-8 w-8 items-center justify-center rounded-lg border hover:bg-accent">
+                                    <i th:data-lucide="${pregunta.activa ? 'eye-off' : 'eye'}" class="h-4 w-4"></i>
+                                </button>
+                            </form>
+                            <button type="button" data-faq-action="delete" title="Eliminar" class="js-faq-action flex h-8 w-8 items-center justify-center rounded-lg border border-red-300 bg-red-50/40 text-red-600 hover:bg-red-100 dark:border-red-900 dark:bg-red-950/20 dark:text-red-400"><i data-lucide="trash-2" class="h-4 w-4"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
         </div>
 
+        <div th:if="${#lists.isEmpty(preguntas)}" class="px-6 py-14 text-center">
+            <div class="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-muted text-muted-foreground"><i data-lucide="search-x" class="h-5 w-5"></i></div>
+            <h3 class="mt-3 text-sm font-semibold">No se encontraron preguntas</h3>
+            <p class="mt-1 text-xs text-muted-foreground">Prueba con otro término o elimina los filtros.</p>
+            <a th:href="@{/admin/preguntas}" class="btn btn-outline btn-size-default mt-4">Limpiar filtros</a>
+        </div>
+
+        <div class="flex flex-col gap-3 border-t border-border p-4 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+            <div th:text="|Mostrando ${#lists.size(preguntas)} de ${estadisticas.total} preguntas|">Mostrando 0 preguntas</div>
+            <div class="inline-flex items-center gap-1.5"><i data-lucide="info" class="h-3.5 w-3.5"></i>Usa las flechas para cambiar el orden en la landing.</div>
+        </div>
     </div>
+
+    <!-- Nueva pregunta -->
+    <div id="modal-new-faq" class="faq-admin-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div class="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6">
+                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary"><i data-lucide="message-circle-question" class="h-5 w-5"></i></div>
+                <div class="flex-1 pr-6"><h2 class="text-lg font-semibold">Nueva pregunta</h2><p class="mt-1 text-sm text-muted-foreground">Agrega contenido a la sección pública de preguntas frecuentes.</p></div>
+                <button type="button" class="js-faq-close-modal absolute right-4 top-4 rounded-md p-1 text-muted-foreground hover:bg-accent"><i data-lucide="x" class="h-4 w-4"></i></button>
+            </div>
+            <form id="new-faq-form" th:action="@{/admin/preguntas}" th:object="${nuevaPregunta}" method="post" class="flex min-h-0 flex-1 flex-col" novalidate>
+                <input type="hidden" name="buscar" th:value="${buscar}"><input type="hidden" name="estado" th:value="${estado}"><input type="hidden" name="categoriaFiltro" th:value="${categoriaFiltro}">
+                <div class="flex-1 space-y-4 overflow-y-auto px-6 py-5">
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between"><label for="new-faq-question" class="text-xs font-semibold">Pregunta <span class="text-destructive">*</span></label><span class="faq-question-count text-[11px] text-muted-foreground">0/160</span></div>
+                        <input id="new-faq-question" th:field="*{pregunta}" required maxlength="160" class="faq-question-field faq-form-control h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                        <p th:if="${#fields.hasErrors('pregunta')}" th:errors="*{pregunta}" class="text-xs text-destructive"></p>
+                    </div>
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between"><label for="new-faq-answer" class="text-xs font-semibold">Respuesta <span class="text-destructive">*</span></label><span class="faq-answer-count text-[11px] text-muted-foreground">0/600</span></div>
+                        <textarea id="new-faq-answer" th:field="*{respuesta}" required maxlength="600" rows="6" class="faq-answer-field faq-form-control min-h-36 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"></textarea>
+                        <p th:if="${#fields.hasErrors('respuesta')}" th:errors="*{respuesta}" class="text-xs text-destructive"></p>
+                    </div>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="space-y-1.5"><label for="new-faq-category" class="text-xs font-semibold">Categoría <span class="text-destructive">*</span></label><select id="new-faq-category" th:field="*{categoria}" required class="faq-form-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">Seleccionar…</option><option th:each="categoria : ${categoriasPregunta}" th:value="${categoria}" th:text="${categoria.etiqueta}">General</option></select><p th:if="${#fields.hasErrors('categoria')}" th:errors="*{categoria}" class="text-xs text-destructive"></p></div>
+                        <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-3"><input th:field="*{activa}" type="checkbox" class="mt-0.5 h-4 w-4 accent-[var(--primary)]"><span><span class="block text-sm font-semibold">Publicar en la landing</span><span class="block text-xs text-muted-foreground">Puede ocultarse posteriormente.</span></span></label>
+                    </div>
+                </div>
+                <div class="flex flex-col-reverse gap-2 border-t border-border bg-muted/30 px-6 py-4 sm:flex-row sm:justify-between"><button type="button" class="js-faq-close-modal btn btn-ghost btn-size-default">Cancelar</button><button type="submit" class="btn btn-default btn-size-default font-semibold"><i data-lucide="plus"></i>Crear pregunta</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Editar pregunta -->
+    <div id="modal-edit-faq" class="faq-admin-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div class="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary"><i data-lucide="file-edit" class="h-5 w-5"></i></div><div class="flex-1 pr-6"><h2 class="text-lg font-semibold">Editar pregunta</h2><p class="mt-1 text-sm text-muted-foreground">Los cambios se reflejarán inmediatamente en la landing.</p></div><button type="button" class="js-faq-close-modal absolute right-4 top-4 rounded-md p-1 text-muted-foreground hover:bg-accent"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+            <form id="edit-faq-form" th:action="@{/admin/preguntas/editar}" th:object="${editarPregunta}" method="post" class="flex min-h-0 flex-1 flex-col" novalidate>
+                <input id="edit-faq-id" th:field="*{id}" type="hidden"><input type="hidden" name="buscar" th:value="${buscar}"><input type="hidden" name="estado" th:value="${estado}"><input type="hidden" name="categoriaFiltro" th:value="${categoriaFiltro}">
+                <div class="flex-1 space-y-4 overflow-y-auto px-6 py-5">
+                    <div class="space-y-1.5"><div class="flex justify-between"><label for="edit-faq-question" class="text-xs font-semibold">Pregunta <span class="text-destructive">*</span></label><span class="faq-question-count text-[11px] text-muted-foreground">0/160</span></div><input id="edit-faq-question" th:field="*{pregunta}" required maxlength="160" class="faq-question-field faq-form-control h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-ring"><p th:if="${#fields.hasErrors('pregunta')}" th:errors="*{pregunta}" class="text-xs text-destructive"></p></div>
+                    <div class="space-y-1.5"><div class="flex justify-between"><label for="edit-faq-answer" class="text-xs font-semibold">Respuesta <span class="text-destructive">*</span></label><span class="faq-answer-count text-[11px] text-muted-foreground">0/600</span></div><textarea id="edit-faq-answer" th:field="*{respuesta}" required maxlength="600" rows="6" class="faq-answer-field faq-form-control min-h-36 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"></textarea><p th:if="${#fields.hasErrors('respuesta')}" th:errors="*{respuesta}" class="text-xs text-destructive"></p></div>
+                    <div class="grid gap-4 sm:grid-cols-2"><div class="space-y-1.5"><label for="edit-faq-category" class="text-xs font-semibold">Categoría <span class="text-destructive">*</span></label><select id="edit-faq-category" th:field="*{categoria}" required class="faq-form-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option th:each="categoria : ${categoriasPregunta}" th:value="${categoria}" th:text="${categoria.etiqueta}">General</option></select><p th:if="${#fields.hasErrors('categoria')}" th:errors="*{categoria}" class="text-xs text-destructive"></p></div><label class="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-3"><input id="edit-faq-active" th:field="*{activa}" type="checkbox" class="mt-0.5 h-4 w-4 accent-[var(--primary)]"><span><span class="block text-sm font-semibold">Publicada</span><span class="block text-xs text-muted-foreground">Visible en la landing.</span></span></label></div>
+                </div>
+                <div class="flex flex-col-reverse gap-2 border-t border-border bg-muted/30 px-6 py-4 sm:flex-row sm:justify-between"><button type="button" class="js-faq-close-modal btn btn-ghost btn-size-default">Cancelar</button><button type="submit" class="btn btn-default btn-size-default font-semibold"><i data-lucide="save"></i>Guardar cambios</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Vista previa -->
+    <div id="modal-faq-preview" class="faq-admin-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div class="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary"><i data-lucide="monitor" class="h-5 w-5"></i></div><div class="flex-1 pr-6"><h2 class="text-lg font-semibold">Vista previa</h2><p id="preview-faq-status" class="mt-1 text-sm text-muted-foreground"></p></div><button type="button" class="js-faq-close-modal absolute right-4 top-4 rounded-md p-1 text-muted-foreground hover:bg-accent"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+            <div class="flex-1 overflow-y-auto px-8 py-7"><div class="border-y border-border/70"><div class="flex items-center justify-between gap-6 py-6"><h3 id="preview-faq-question" class="text-lg font-semibold text-primary"></h3><span class="relative flex h-7 w-7 shrink-0 rotate-45 items-center justify-center rounded-full border border-primary bg-primary/10 text-primary"><span class="absolute h-[1.5px] w-3 bg-current"></span><span class="absolute h-3 w-[1.5px] bg-current"></span></span></div><p id="preview-faq-answer" class="pb-6 pr-12 text-[15px] leading-relaxed text-muted-foreground"></p></div><div class="mt-4 flex gap-2 text-xs"><span id="preview-faq-category" class="rounded-md border border-primary/20 bg-primary/10 px-2.5 py-1 font-semibold text-primary"></span><span id="preview-faq-order" class="rounded-md border border-border px-2.5 py-1 text-muted-foreground"></span></div></div>
+            <div class="border-t border-border bg-muted/30 px-6 py-4 text-right"><button type="button" class="js-faq-close-modal btn btn-outline btn-size-default">Cerrar</button></div>
+        </div>
+    </div>
+
+    <!-- Eliminar -->
+    <div id="modal-delete-faq" class="faq-admin-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div class="flex max-h-[92vh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-destructive/15 text-destructive"><i data-lucide="triangle-alert" class="h-5 w-5"></i></div><div class="flex-1 pr-6"><h2 class="text-lg font-semibold">Eliminar pregunta</h2><p class="mt-1 text-sm text-muted-foreground">Esta acción no se puede deshacer.</p></div><button type="button" class="js-faq-close-modal absolute right-4 top-4 rounded-md p-1 text-muted-foreground hover:bg-accent"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+            <form id="delete-faq-form" th:action="@{/admin/preguntas/eliminar}" method="post">
+                <input id="delete-faq-id" name="id" type="hidden"><input type="hidden" name="buscar" th:value="${buscar}"><input type="hidden" name="estado" th:value="${estado}"><input type="hidden" name="categoria" th:value="${categoriaFiltro}">
+                <div class="px-6 py-5"><p class="text-sm text-muted-foreground">Estás a punto de eliminar <strong id="delete-faq-question" class="text-foreground"></strong>.</p><div class="mt-4 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-xs text-destructive">Para continuar, escribe <strong>ELIMINAR</strong>.</div><input id="delete-faq-confirmation" required autocomplete="off" placeholder="ELIMINAR" class="mt-3 h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-destructive"></div>
+                <div class="flex justify-between gap-2 border-t border-border bg-muted/30 px-6 py-4"><button type="button" class="js-faq-close-modal btn btn-ghost btn-size-default">Cancelar</button><button type="submit" class="btn btn-destructive btn-size-default font-semibold"><i data-lucide="trash-2"></i>Eliminar</button></div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script th:src="@{/dist/js/preguntas.js}"></script>
+</div>
 
 </body>
 </html>
