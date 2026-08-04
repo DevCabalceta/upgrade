@@ -1,16 +1,237 @@
 <!DOCTYPE html>
-<html th:replace="~{admin/layout/admin-layout :: layout('Galeria', 'galeria', ~{::#page-content})}" xmlns:th="http://www.thymeleaf.org">
+<html th:replace="~{admin/layout/admin-layout :: layout('Galería', 'galeria', ~{::#page-content})}"
+      xmlns:th="http://www.thymeleaf.org">
 <body>
 
-    <div id="page-content">
-        
-        <h1 class="text-2xl font-bold mb-4">Módulo de Galeria</h1>
-        
-        <div class="glass-card p-6 rounded-xl">
-            <p>Aquí va la tabla o el contenido del Galeria...</p>
-        </div>
+<div id="page-content" class="space-y-6"
+     th:data-open-modal="${modalAbierto}"
+     th:data-success-message="${mensajeExito}"
+     th:data-error-message="${mensajeError}"
+     th:data-open-categories="${abrirCategorias}">
 
+    <style>
+        .gallery-dropzone.is-dragging {
+            border-color: var(--primary);
+            background: color-mix(in oklab, var(--primary) 8%, transparent);
+        }
+        .gallery-menu { animation: gallery-menu-in 140ms ease-out; transform-origin: top right; }
+        .gallery-modal-panel { animation: gallery-modal-in 180ms cubic-bezier(.22, 1, .36, 1); }
+        @keyframes gallery-menu-in { from { opacity: 0; transform: scale(.96) translateY(-4px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes gallery-modal-in { from { opacity: 0; transform: translate(-50%, -48%) scale(.98); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+    </style>
+
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight md:text-3xl">Galería</h1>
+            <p class="mt-1 text-sm text-muted-foreground">Administra las fotografías y videos que se muestran en el portafolio público.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <button id="btn-gallery-categories" type="button" class="btn btn-outline btn-size-default"><i data-lucide="tags"></i>Categorías</button>
+            <a th:href="@{/admin/galeria/exportar(buscar=${buscar},tipo=${tipoFiltro},estado=${estadoFiltro},categoria=${categoriaFiltro},ordenar=${ordenFiltro})}" class="btn btn-outline btn-size-default"><i data-lucide="download"></i>Exportar</a>
+            <button id="btn-new-gallery" type="button" class="btn btn-default btn-size-default font-semibold"><i data-lucide="plus"></i>Nuevo archivo</button>
+        </div>
     </div>
 
+    <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div class="rounded-2xl border border-border bg-card p-5">
+            <div class="flex items-start justify-between gap-3"><div><div class="text-xs font-medium text-muted-foreground">Total de archivos</div><div class="mt-2 text-2xl font-bold" th:text="${estadisticas.total}">0</div></div><div class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary"><i data-lucide="images" class="h-4 w-4"></i></div></div>
+            <div class="mt-3 text-xs text-muted-foreground">Contenido registrado</div>
+        </div>
+        <div class="rounded-2xl border border-border bg-card p-5">
+            <div class="flex items-start justify-between gap-3"><div><div class="text-xs font-medium text-muted-foreground">Fotografías</div><div class="mt-2 text-2xl font-bold" th:text="${estadisticas.imagenes}">0</div></div><div class="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/10 text-sky-500"><i data-lucide="image" class="h-4 w-4"></i></div></div>
+            <div class="mt-3 text-xs text-muted-foreground">Formatos JPG, PNG y WebP</div>
+        </div>
+        <div class="rounded-2xl border border-border bg-card p-5">
+            <div class="flex items-start justify-between gap-3"><div><div class="text-xs font-medium text-muted-foreground">Videos</div><div class="mt-2 text-2xl font-bold" th:text="${estadisticas.videos}">0</div></div><div class="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 text-violet-500"><i data-lucide="clapperboard" class="h-4 w-4"></i></div></div>
+            <div class="mt-3 text-xs text-muted-foreground">Material audiovisual</div>
+        </div>
+        <div class="rounded-2xl border border-border bg-card p-5">
+            <div class="flex items-start justify-between gap-3"><div><div class="text-xs font-medium text-muted-foreground">Publicados</div><div class="mt-2 text-2xl font-bold text-[var(--success)]" th:text="${estadisticas.publicadas}">0</div></div><div class="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--success)]/10 text-[var(--success)]"><i data-lucide="globe-2" class="h-4 w-4"></i></div></div>
+            <div class="mt-3 text-xs text-muted-foreground" th:text="${(estadisticas.total - estadisticas.publicadas) + (estadisticas.total - estadisticas.publicadas == 1 ? ' borrador' : ' borradores')}">0 borradores</div>
+        </div>
+    </div>
+
+    <div class="overflow-visible rounded-2xl border border-border bg-card">
+        <form id="gallery-filter-form" th:action="@{/admin/galeria}" method="get">
+            <div class="flex flex-col gap-3 border-b border-border p-4 xl:flex-row xl:items-center">
+                <div class="relative min-w-0 flex-1 xl:max-w-md">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"></i>
+                    <input id="gallery-search" name="buscar" type="search" th:value="${buscar}" placeholder="Buscar por nombre, categoría o descripción…" class="h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-3 text-sm outline-none transition focus:border-primary/50 focus:ring-1 focus:ring-primary/30">
+                </div>
+                <div class="grid flex-1 grid-cols-2 gap-2 md:grid-cols-4">
+                    <select name="tipo" class="gallery-auto-filter h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary/50"><option value="">Todos los tipos</option><option th:each="tipo : ${tiposGaleria}" th:value="${tipo.name()}" th:text="${tipo.etiqueta}" th:selected="${tipoFiltro == tipo.name()}">Tipo</option></select>
+                    <select name="categoria" class="gallery-auto-filter h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary/50"><option value="">Todas las categorías</option><option th:each="categoria : ${categoriasGaleria}" th:value="${categoria.id}" th:text="${categoria.nombre}" th:selected="${categoriaFiltro == categoria.id}">Categoría</option></select>
+                    <select name="estado" class="gallery-auto-filter h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary/50"><option value="todos" th:selected="${estadoFiltro == 'todos'}">Todos los estados</option><option value="publicados" th:selected="${estadoFiltro == 'publicados'}">Publicados</option><option value="borradores" th:selected="${estadoFiltro == 'borradores'}">Borradores</option></select>
+                    <select name="ordenar" class="gallery-auto-filter h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary/50"><option value="orden" th:selected="${ordenFiltro == 'orden'}">Orden del portafolio</option><option value="recientes" th:selected="${ordenFiltro == 'recientes'}">Más recientes</option><option value="antiguos" th:selected="${ordenFiltro == 'antiguos'}">Más antiguos</option><option value="titulo" th:selected="${ordenFiltro == 'titulo'}">Nombre A–Z</option></select>
+                </div>
+                <div class="inline-flex h-9 shrink-0 items-center rounded-lg bg-muted p-1">
+                    <button id="gallery-view-cards" type="button" class="gallery-view-button flex h-7 w-8 items-center justify-center rounded-md text-muted-foreground transition" title="Vista de tarjetas"><i data-lucide="layout-grid" class="h-4 w-4"></i></button>
+                    <button id="gallery-view-table" type="button" class="gallery-view-button flex h-7 w-8 items-center justify-center rounded-md text-muted-foreground transition" title="Vista de tabla"><i data-lucide="list" class="h-4 w-4"></i></button>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/20 px-4 py-2.5">
+                <div class="text-xs text-muted-foreground" th:text="${#lists.size(elementos) + (#lists.size(elementos) == 1 ? ' resultado' : ' resultados')}">0 resultados</div>
+                <a th:if="${not #strings.isEmpty(buscar) or not #strings.isEmpty(tipoFiltro) or estadoFiltro != 'todos' or categoriaFiltro != null or ordenFiltro != 'orden'}" th:href="@{/admin/galeria}" class="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"><i data-lucide="x" class="h-3 w-3"></i>Limpiar filtros</a>
+            </div>
+        </form>
+
+        <div th:if="${#lists.isEmpty(elementos)}" class="px-6 py-16 text-center">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground"><i data-lucide="image-off" class="h-6 w-6"></i></div>
+            <h3 class="mt-4 font-semibold">No encontramos archivos</h3><p class="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">Prueba con otra búsqueda o limpia los filtros aplicados.</p><a th:href="@{/admin/galeria}" class="btn btn-outline btn-size-default mt-4">Limpiar filtros</a>
+        </div>
+
+        <!-- Tarjetas: menú de tres puntos como en la versión PHP -->
+        <div id="gallery-cards" th:if="${not #lists.isEmpty(elementos)}" class="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <article th:each="elemento : ${elementos}" class="gallery-record gallery-card group relative z-0 overflow-visible rounded-2xl border border-border bg-card transition hover:z-50 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg focus-within:z-50"
+                     th:data-gallery-id="${elemento.id}" th:data-gallery-type="${elemento.tipo.name()}" th:data-gallery-source="${elemento.fuente.name()}" th:data-gallery-media="${elemento.rutaMedia}" th:data-gallery-poster="${elemento.rutaPortada}" th:data-gallery-title="${elemento.titulo}" th:data-gallery-category-id="${elemento.categoria.id}" th:data-gallery-category="${elemento.categoria.nombre}" th:data-gallery-description="${elemento.descripcion}" th:data-gallery-alt="${elemento.textoAlternativo}" th:data-gallery-design="${elemento.diseno.name()}" th:data-gallery-published="${elemento.publicado}" th:data-gallery-featured="${elemento.destacado}" th:data-gallery-date="${elemento.fechaEvento}" th:data-gallery-order="${elemento.orden}">
+                <button type="button" class="js-gallery-preview relative block aspect-[16/10] w-full cursor-pointer overflow-hidden rounded-t-2xl bg-muted text-left">
+                    <img th:if="${!elemento.esVideo() or not #strings.isEmpty(elemento.rutaPortada)}" th:src="${elemento.rutaMiniatura}" th:alt="${elemento.textoAlternativo}" loading="lazy" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                    <video th:if="${elemento.esVideo() and #strings.isEmpty(elemento.rutaPortada)}" th:src="${elemento.rutaMedia}" muted preload="metadata" class="h-full w-full object-cover"></video>
+                    <span class="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10"></span>
+                    <span class="absolute left-3 top-3 flex items-center gap-2"><span class="inline-flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white backdrop-blur"><i th:data-lucide="${elemento.esVideo() ? 'play' : 'image'}" class="h-3 w-3"></i><span th:text="${elemento.tipo.etiqueta}">Fotografía</span></span><span th:if="${elemento.destacado}" class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-400 text-black" title="Destacado"><i data-lucide="star" class="h-3 w-3 fill-current"></i></span></span>
+                    <span class="absolute bottom-3 left-3 inline-flex rounded-md border px-2 py-0.5 text-[10px] font-semibold backdrop-blur" th:classappend="${elemento.publicado} ? 'border-[var(--success)]/30 bg-[var(--success)]/15 text-[var(--success)]' : 'border-white/20 bg-black/50 text-white'" th:text="${elemento.publicado ? 'Publicado' : 'Borrador'}">Publicado</span>
+                </button>
+                <div class="relative p-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <button type="button" class="js-gallery-preview min-w-0 text-left"><span class="block truncate font-semibold" th:text="${elemento.titulo}">Título</span><span class="mt-1 block truncate text-xs font-medium text-primary" th:text="${elemento.categoria.nombre}">Categoría</span></button>
+                        <div class="relative shrink-0"><button type="button" class="js-gallery-menu-trigger flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" th:aria-label="'Acciones de ' + ${elemento.titulo}" aria-expanded="false"><i data-lucide="more-vertical" class="h-4 w-4"></i></button>
+                            <div class="gallery-card-menu gallery-menu absolute right-0 top-9 z-50 hidden w-52 overflow-hidden rounded-xl border border-border bg-popover p-1 text-popover-foreground shadow-xl">
+                                <button type="button" data-gallery-action="preview" class="js-gallery-action flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-accent"><i data-lucide="eye" class="h-4 w-4"></i>Ver detalle</button>
+                                <button type="button" data-gallery-action="edit" class="js-gallery-action flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-accent"><i data-lucide="pencil" class="h-4 w-4"></i>Editar</button>
+                                <form th:action="@{/admin/galeria/destacado}" method="post"><input type="hidden" name="id" th:value="${elemento.id}"><th:block th:replace="~{admin/fragments/gallery-form :: filters}"></th:block><button type="submit" class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-accent"><i data-lucide="star" class="h-4 w-4"></i><span th:text="${elemento.destacado ? 'Quitar destacado' : 'Destacar'}">Destacar</span></button></form>
+                                <form th:action="@{/admin/galeria/publicacion}" method="post"><input type="hidden" name="id" th:value="${elemento.id}"><th:block th:replace="~{admin/fragments/gallery-form :: filters}"></th:block><button type="submit" class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-accent"><i th:data-lucide="${elemento.publicado ? 'eye-off' : 'globe-2'}" class="h-4 w-4"></i><span th:text="${elemento.publicado ? 'Pasar a borrador' : 'Publicar'}">Publicar</span></button></form>
+                                <div class="my-1 h-px bg-border"></div>
+                                <form th:action="@{/admin/galeria/eliminar}" method="post" class="js-gallery-delete-form"><input type="hidden" name="id" th:value="${elemento.id}"><input type="hidden" name="titulo" th:value="${elemento.titulo}"><th:block th:replace="~{admin/fragments/gallery-form :: filters}"></th:block><button type="submit" class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-destructive hover:bg-destructive/10"><i data-lucide="trash-2" class="h-4 w-4"></i>Eliminar</button></form>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="mt-3 line-clamp-2 min-h-8 text-xs leading-relaxed text-muted-foreground" th:text="${#strings.isEmpty(elemento.descripcion) ? 'Sin descripción' : elemento.descripcion}">Descripción</p>
+                    <div class="mt-4 flex items-center justify-between border-t border-border pt-3 text-[11px] text-muted-foreground"><span class="flex items-center gap-1"><i data-lucide="calendar" class="h-3 w-3"></i><span th:text="${#temporals.format(elemento.fechaEvento, 'dd MMM yyyy')}">Fecha</span></span><span th:text="'Orden #' + ${elemento.orden}">Orden #1</span></div>
+                </div>
+            </article>
+        </div>
+
+        <!-- Tabla: orden y flechas con el mismo lenguaje visual del módulo Preguntas -->
+        <div id="gallery-table" th:if="${not #lists.isEmpty(elementos)}" class="hidden overflow-x-auto">
+            <table class="w-full min-w-[1250px] text-sm">
+                <thead><tr class="border-b border-border text-left text-xs text-muted-foreground"><th class="px-5 py-3 font-medium">Orden</th><th class="px-4 py-3 font-medium">Archivo</th><th class="px-4 py-3 font-medium">Categoría</th><th class="px-4 py-3 font-medium">Tipo</th><th class="px-4 py-3 font-medium">Estado</th><th class="px-4 py-3 font-medium">Diseño</th><th class="px-4 py-3 font-medium">Fecha</th><th class="px-5 py-3 text-right font-medium">Acciones</th></tr></thead>
+                <tbody>
+                <tr th:each="elemento : ${elementos}" class="gallery-record border-b border-border transition last:border-0 hover:bg-muted/30"
+                    th:data-gallery-id="${elemento.id}" th:data-gallery-type="${elemento.tipo.name()}" th:data-gallery-source="${elemento.fuente.name()}" th:data-gallery-media="${elemento.rutaMedia}" th:data-gallery-poster="${elemento.rutaPortada}" th:data-gallery-title="${elemento.titulo}" th:data-gallery-category-id="${elemento.categoria.id}" th:data-gallery-category="${elemento.categoria.nombre}" th:data-gallery-description="${elemento.descripcion}" th:data-gallery-alt="${elemento.textoAlternativo}" th:data-gallery-design="${elemento.diseno.name()}" th:data-gallery-published="${elemento.publicado}" th:data-gallery-featured="${elemento.destacado}" th:data-gallery-date="${elemento.fechaEvento}" th:data-gallery-order="${elemento.orden}">
+                    <td class="px-5 py-3.5"><span class="inline-flex h-8 min-w-8 items-center justify-center rounded-lg bg-muted px-2 font-mono text-xs font-bold text-muted-foreground" th:text="${#numbers.formatInteger(elemento.orden, 2)}">01</span></td>
+                    <td class="px-4 py-3.5"><button type="button" class="js-gallery-preview flex items-center gap-3 text-left"><span class="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg bg-muted"><img th:if="${!elemento.esVideo() or not #strings.isEmpty(elemento.rutaPortada)}" th:src="${elemento.rutaMiniatura}" th:alt="${elemento.textoAlternativo}" class="h-full w-full object-cover"><video th:if="${elemento.esVideo() and #strings.isEmpty(elemento.rutaPortada)}" th:src="${elemento.rutaMedia}" muted preload="metadata" class="h-full w-full object-cover"></video><span th:if="${elemento.esVideo()}" class="absolute inset-0 flex items-center justify-center bg-black/25 text-white"><i data-lucide="play" class="h-4 w-4 fill-current"></i></span></span><span class="min-w-0"><span class="block max-w-56 truncate font-semibold hover:text-primary" th:text="${elemento.titulo}">Título</span><span class="mt-0.5 block max-w-56 truncate text-xs text-muted-foreground" th:text="${#strings.isEmpty(elemento.descripcion) ? 'Sin descripción' : elemento.descripcion}">Descripción</span></span></button></td>
+                    <td class="px-4 py-3.5 text-muted-foreground" th:text="${elemento.categoria.nombre}">Categoría</td>
+                    <td class="px-4 py-3.5"><span class="inline-flex items-center gap-1.5 text-xs font-medium"><i th:data-lucide="${elemento.esVideo() ? 'clapperboard' : 'image'}" class="h-3.5 w-3.5 text-primary"></i><span th:text="${elemento.tipo.etiqueta}">Tipo</span></span></td>
+                    <td class="px-4 py-3.5"><span class="inline-flex rounded-md border px-2 py-0.5 text-xs font-semibold" th:classappend="${elemento.publicado} ? 'border-[var(--success)]/20 bg-[var(--success)]/15 text-[var(--success)]' : 'border-border bg-muted text-muted-foreground'" th:text="${elemento.publicado ? 'Publicado' : 'Borrador'}">Estado</span></td>
+                    <td class="px-4 py-3.5 text-muted-foreground" th:text="${elemento.diseno.etiqueta}">Diseño</td>
+                    <td class="px-4 py-3.5 text-muted-foreground" th:text="${#temporals.format(elemento.fechaEvento, 'dd MMM yyyy')}">Fecha</td>
+                    <td class="px-5 py-3.5"><div class="flex items-center justify-end gap-1.5">
+                        <button type="button" data-gallery-action="preview" title="Ver detalle" class="js-gallery-action inline-flex h-8 w-8 items-center justify-center rounded-lg border border-sky-300 bg-sky-50/40 text-sky-600 transition-all duration-300 hover:scale-105 hover:bg-sky-50 dark:border-sky-900/80 dark:bg-sky-950/20 dark:text-sky-400"><i data-lucide="eye" class="h-4 w-4"></i></button>
+                        <button type="button" data-gallery-action="edit" title="Editar" class="js-gallery-action inline-flex h-8 w-8 items-center justify-center rounded-lg border border-amber-300 bg-amber-50/40 text-amber-600 transition-all duration-300 hover:scale-105 hover:bg-amber-50 dark:border-amber-900/80 dark:bg-amber-950/20 dark:text-amber-400"><i data-lucide="pencil" class="h-4 w-4"></i></button>
+                        <form th:action="@{/admin/galeria/subir}" method="post" class="inline-flex"><input type="hidden" name="id" th:value="${elemento.id}"><th:block th:replace="~{admin/fragments/gallery-form :: filters}"></th:block><button type="submit" title="Subir posición" class="flex h-8 w-8 items-center justify-center rounded-lg border border-indigo-300 bg-indigo-50/40 text-indigo-600 hover:bg-indigo-100 disabled:opacity-35 dark:border-indigo-900 dark:bg-indigo-950/20 dark:text-indigo-400" th:disabled="${elemento.orden == 1}"><i data-lucide="arrow-up" class="h-4 w-4"></i></button></form>
+                        <form th:action="@{/admin/galeria/bajar}" method="post" class="inline-flex"><input type="hidden" name="id" th:value="${elemento.id}"><th:block th:replace="~{admin/fragments/gallery-form :: filters}"></th:block><button type="submit" title="Bajar posición" class="flex h-8 w-8 items-center justify-center rounded-lg border border-indigo-300 bg-indigo-50/40 text-indigo-600 hover:bg-indigo-100 disabled:opacity-35 dark:border-indigo-900 dark:bg-indigo-950/20 dark:text-indigo-400" th:disabled="${elemento.orden == estadisticas.total}"><i data-lucide="arrow-down" class="h-4 w-4"></i></button></form>
+                        <form th:action="@{/admin/galeria/destacado}" method="post" class="inline-flex"><input type="hidden" name="id" th:value="${elemento.id}"><th:block th:replace="~{admin/fragments/gallery-form :: filters}"></th:block><button type="submit" th:title="${elemento.destacado ? 'Quitar destacado' : 'Destacar'}" class="flex h-8 w-8 items-center justify-center rounded-lg border border-yellow-300 bg-yellow-50/40 text-yellow-600 hover:bg-yellow-100 dark:border-yellow-900 dark:bg-yellow-950/20 dark:text-yellow-400"><i data-lucide="star" class="h-4 w-4" th:classappend="${elemento.destacado} ? 'fill-current' : ''"></i></button></form>
+                        <form th:action="@{/admin/galeria/publicacion}" method="post" class="inline-flex"><input type="hidden" name="id" th:value="${elemento.id}"><th:block th:replace="~{admin/fragments/gallery-form :: filters}"></th:block><button type="submit" th:title="${elemento.publicado ? 'Pasar a borrador' : 'Publicar'}" class="flex h-8 w-8 items-center justify-center rounded-lg border border-indigo-300 bg-indigo-50/40 text-indigo-600 hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/20 dark:text-indigo-400"><i th:data-lucide="${elemento.publicado ? 'eye-off' : 'globe-2'}" class="h-4 w-4"></i></button></form>
+                        <form th:action="@{/admin/galeria/eliminar}" method="post" class="js-gallery-delete-form inline-flex"><input type="hidden" name="id" th:value="${elemento.id}"><input type="hidden" name="titulo" th:value="${elemento.titulo}"><th:block th:replace="~{admin/fragments/gallery-form :: filters}"></th:block><button type="submit" title="Eliminar" class="flex h-8 w-8 items-center justify-center rounded-lg border border-red-300 bg-red-50/40 text-red-600 hover:bg-red-100 dark:border-red-900 dark:bg-red-950/20 dark:text-red-400"><i data-lucide="trash-2" class="h-4 w-4"></i></button></form>
+                    </div></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal nuevo archivo -->
+    <div id="gallery-new-modal" class="gallery-modal fixed inset-0 z-[80] hidden">
+        <button type="button" aria-label="Cerrar" class="js-close-gallery-modal absolute inset-0 bg-black/60 backdrop-blur-sm"></button>
+        <div class="gallery-modal-panel fixed left-1/2 top-1/2 flex max-h-[92vh] w-[calc(100%-2rem)] max-w-4xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary"><i data-lucide="image-plus" class="h-5 w-5"></i></div><div class="min-w-0 flex-1"><h2 class="text-lg font-semibold">Nuevo archivo</h2><p class="mt-1 text-sm text-muted-foreground">Agrega una fotografía o video al portafolio.</p></div><button type="button" class="js-close-gallery-modal flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+            <form id="gallery-new-form" th:action="@{/admin/galeria}" th:object="${nuevoElemento}" method="post" enctype="multipart/form-data" class="flex min-h-0 flex-1 flex-col" novalidate><th:block th:replace="~{admin/fragments/gallery-form :: filters}"></th:block><div class="flex-1 overflow-y-auto px-6 py-5"><div th:if="${#fields.hasAnyErrors()}" class="mb-5 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"><div th:each="error : ${#fields.allErrors()}" th:text="${error}">Error</div></div><th:block th:replace="~{admin/fragments/gallery-form :: fields('new')}"></th:block></div><div class="flex flex-col-reverse gap-2 border-t border-border bg-muted/30 px-6 py-4 sm:flex-row sm:justify-between"><button type="button" class="js-close-gallery-modal btn btn-ghost btn-size-default">Cancelar</button><button type="submit" class="btn btn-default btn-size-default font-semibold"><i data-lucide="save"></i>Guardar archivo</button></div></form>
+        </div>
+    </div>
+
+    <!-- Modal editar archivo -->
+    <div id="gallery-edit-modal" class="gallery-modal fixed inset-0 z-[80] hidden">
+        <button type="button" aria-label="Cerrar" class="js-close-gallery-modal absolute inset-0 bg-black/60 backdrop-blur-sm"></button>
+        <div class="gallery-modal-panel fixed left-1/2 top-1/2 flex max-h-[92vh] w-[calc(100%-2rem)] max-w-4xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary"><i data-lucide="file-pen-line" class="h-5 w-5"></i></div><div class="min-w-0 flex-1"><h2 class="text-lg font-semibold">Editar archivo</h2><p class="mt-1 text-sm text-muted-foreground">Actualiza el contenido y sus datos de publicación.</p></div><button type="button" class="js-close-gallery-modal flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+            <form id="gallery-edit-form" th:action="@{/admin/galeria/editar}" th:object="${editarElemento}" method="post" enctype="multipart/form-data" class="flex min-h-0 flex-1 flex-col" novalidate><input type="hidden" th:field="*{id}"><th:block th:replace="~{admin/fragments/gallery-form :: filters}"></th:block><div class="flex-1 overflow-y-auto px-6 py-5"><div th:if="${#fields.hasAnyErrors()}" class="mb-5 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"><div th:each="error : ${#fields.allErrors()}" th:text="${error}">Error</div></div><th:block th:replace="~{admin/fragments/gallery-form :: fields('edit')}"></th:block></div><div class="flex flex-col-reverse gap-2 border-t border-border bg-muted/30 px-6 py-4 sm:flex-row sm:justify-between"><button type="button" class="js-close-gallery-modal btn btn-ghost btn-size-default">Cancelar</button><button type="submit" class="btn btn-default btn-size-default font-semibold"><i data-lucide="save"></i>Guardar cambios</button></div></form>
+        </div>
+    </div>
+
+    <!-- Modal detalle -->
+    <div id="gallery-detail-modal" class="gallery-modal fixed inset-0 z-[80] hidden">
+        <button type="button" aria-label="Cerrar" class="js-close-gallery-modal absolute inset-0 bg-black/70 backdrop-blur-sm"></button>
+        <div class="gallery-modal-panel fixed left-1/2 top-1/2 flex max-h-[92vh] w-[calc(100%-2rem)] max-w-4xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="flex items-center justify-between border-b border-border px-6 py-4"><div class="flex items-center gap-3"><div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary"><i data-lucide="eye" class="h-5 w-5"></i></div><div><h2 class="text-lg font-semibold">Detalle del archivo</h2><p class="text-xs text-muted-foreground">Vista previa y datos de publicación.</p></div></div><button type="button" class="js-close-gallery-modal flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+            <div id="gallery-detail-content" class="flex-1 overflow-y-auto p-6"></div>
+            <div class="flex items-center justify-between gap-2 border-t border-border bg-muted/30 px-6 py-4"><button type="button" class="js-close-gallery-modal btn btn-ghost btn-size-default">Cerrar</button><button id="gallery-detail-edit" type="button" class="btn btn-default btn-size-default"><i data-lucide="pencil"></i>Editar</button></div>
+        </div>
+    </div>
+
+    <!-- Modal confirmar eliminación -->
+    <div id="gallery-delete-modal" class="gallery-modal fixed inset-0 z-[90] hidden">
+        <button type="button" aria-label="Cerrar" class="js-close-gallery-modal absolute inset-0 bg-black/60 backdrop-blur-sm"></button>
+        <div class="gallery-modal-panel fixed left-1/2 top-1/2 flex max-h-[92vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="flex items-start gap-4 border-b border-border px-6 pb-4 pt-6">
+                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-destructive/15 text-destructive">
+                    <i data-lucide="triangle-alert" class="h-5 w-5"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <h2 class="text-lg font-semibold">Eliminar archivo</h2>
+                    <p class="mt-1 text-sm text-muted-foreground">Esta acción no se puede deshacer.</p>
+                </div>
+                <button type="button" class="js-close-gallery-modal flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground">
+                    <i data-lucide="x" class="h-4 w-4"></i>
+                </button>
+            </div>
+
+            <form id="gallery-delete-confirm-form" th:action="@{/admin/galeria/eliminar}" method="post">
+                <input id="gallery-delete-id" type="hidden" name="id">
+                <th:block th:replace="~{admin/fragments/gallery-form :: filters}"></th:block>
+
+                <div class="px-6 py-5">
+                    <p class="text-sm text-muted-foreground">
+                        Estás a punto de eliminar
+                        <span id="gallery-delete-name" class="font-semibold text-foreground">este archivo</span>.
+                        Si fue cargado localmente, también se eliminará del almacenamiento.
+                    </p>
+
+                    <div class="mt-4 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-xs text-destructive/90">
+                        Para continuar, escribe <span class="font-bold">ELIMINAR</span> en el campo inferior.
+                    </div>
+
+                    <label for="gallery-delete-confirmation" class="mt-4 block text-xs font-semibold">
+                        Confirmación
+                    </label>
+                    <input id="gallery-delete-confirmation" type="text" autocomplete="off"
+                           placeholder="ELIMINAR"
+                           class="mt-1.5 h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm uppercase outline-none transition focus:border-destructive focus:ring-1 focus:ring-destructive/40">
+                    <p id="gallery-delete-help" class="mt-1.5 text-xs text-muted-foreground">El botón se habilitará cuando escribas la palabra correctamente.</p>
+                </div>
+
+                <div class="flex flex-col-reverse gap-2 border-t border-border bg-muted/30 px-6 py-4 sm:flex-row sm:justify-between">
+                    <button type="button" class="js-close-gallery-modal btn btn-ghost btn-size-default">Cancelar</button>
+                    <button id="gallery-delete-submit" type="submit" disabled
+                            class="btn btn-destructive btn-size-default font-semibold">
+                        <i data-lucide="trash-2"></i>Eliminar archivo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal categorías -->
+    <div id="gallery-categories-modal" class="gallery-modal fixed inset-0 z-[80] hidden">
+        <button type="button" aria-label="Cerrar" class="js-close-gallery-modal absolute inset-0 bg-black/60 backdrop-blur-sm"></button>
+        <div class="gallery-modal-panel fixed left-1/2 top-1/2 flex max-h-[88vh] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary"><i data-lucide="tags" class="h-5 w-5"></i></div><div class="flex-1"><h2 class="text-lg font-semibold">Categorías de la galería</h2><p class="mt-1 text-sm text-muted-foreground">Crea y organiza las categorías disponibles.</p></div><button type="button" class="js-close-gallery-modal flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+            <div class="flex-1 overflow-y-auto p-6"><form th:action="@{/admin/galeria/categorias}" method="post" class="flex gap-2"><input name="nombre" type="text" required minlength="2" maxlength="100" placeholder="Nombre de la categoría" class="h-9 min-w-0 flex-1 rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30"><button type="submit" class="btn btn-default btn-size-default shrink-0"><i data-lucide="plus"></i>Agregar</button></form><div class="mt-5 space-y-2"><div th:each="categoria : ${categoriasGaleria}" class="flex items-center gap-3 rounded-xl border border-border p-3"><div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary"><i data-lucide="folder" class="h-4 w-4"></i></div><div class="min-w-0 flex-1"><div class="truncate text-sm font-semibold" th:text="${categoria.nombre}">Categoría</div><div class="text-xs text-muted-foreground" th:text="${conteosCategoria[categoria.id] + (conteosCategoria[categoria.id] == 1 ? ' archivo' : ' archivos')}">0 archivos</div></div><form th:action="@{/admin/galeria/categorias/eliminar}" method="post" class="js-category-delete-form"><input type="hidden" name="id" th:value="${categoria.id}"><input type="hidden" name="nombre" th:value="${categoria.nombre}"><button type="submit" th:disabled="${conteosCategoria[categoria.id] > 0}" title="Eliminar categoría" class="flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-30"><i data-lucide="trash-2" class="h-4 w-4"></i></button></form></div></div></div>
+            <div class="border-t border-border bg-muted/30 px-6 py-4 text-right"><button type="button" class="js-close-gallery-modal btn btn-outline btn-size-default">Listo</button></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script th:src="@{/dist/js/galeria.js}"></script>
+</div>
 </body>
 </html>

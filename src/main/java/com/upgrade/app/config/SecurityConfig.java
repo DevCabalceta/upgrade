@@ -17,7 +17,7 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(auth -> auth
                 // Rutas públicas: página de inicio, login y todos los recursos estáticos
-                .requestMatchers("/", "/login", "/assets/**", "/dist/**").permitAll()
+                .requestMatchers("/", "/login", "/assets/**", "/dist/**", "/uploads/**").permitAll()
                 // Cualquier ruta que empiece con /admin requiere haber iniciado sesión
                 .requestMatchers("/admin/**").authenticated()
                 .anyRequest().authenticated()
