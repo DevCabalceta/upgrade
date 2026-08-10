@@ -17,7 +17,12 @@ public class InventarioService {
     public Inventario guardar(Inventario inventario) {
         return inventarioRepository.save(inventario);
     }
+
     public List<Inventario> listar() {
         return inventarioRepository.findAll();
+    }
+
+    public Inventario buscarPorId(Long id) {
+        return inventarioRepository.findById(id).orElse(null);
     }
 }

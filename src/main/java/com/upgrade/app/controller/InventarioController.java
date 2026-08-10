@@ -24,25 +24,46 @@ public class InventarioController {
     }
 
     @GetMapping
-public String mostrarInventario(Model model) {
+    public String mostrarInventario(Model model) {
 
-    model.addAttribute(
-            "inventario",
-            new Inventario()
-    );
+        model.addAttribute(
+                "inventario",
+                new Inventario()
+        );
 
-    model.addAttribute(
-            "categorias",
-            categoriaService.listar()
-    );
+        model.addAttribute(
+                "categorias",
+                categoriaService.listar()
+        );
 
-    model.addAttribute(
-            "inventarios",
-            inventarioService.listar()
-    );
+        model.addAttribute(
+                "inventarios",
+                inventarioService.listar()
+        );
 
-    return "admin/inventario";
-}
+        return "admin/inventario";
+    }
+
+    @GetMapping("/editar/{id}")
+    public String editar(@PathVariable Long id, Model model) {
+
+        model.addAttribute(
+                "inventario",
+                inventarioService.buscarPorId(id)
+        );
+
+        model.addAttribute(
+                "categorias",
+                categoriaService.listar()
+        );
+
+        model.addAttribute(
+                "inventarios",
+                inventarioService.listar()
+        );
+
+        return "admin/inventario";
+    }
 
     @PostMapping("/guardar")
     public String guardar(
