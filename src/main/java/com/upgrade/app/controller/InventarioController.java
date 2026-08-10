@@ -65,6 +65,14 @@ public class InventarioController {
         return "admin/inventario";
     }
 
+    @GetMapping("/eliminar/{id}")
+    public String eliminar(@PathVariable Long id) {
+
+        inventarioService.eliminar(id);
+
+        return "redirect:/admin/inventario";
+    }
+
     @PostMapping("/guardar")
     public String guardar(
             @ModelAttribute Inventario inventario) {

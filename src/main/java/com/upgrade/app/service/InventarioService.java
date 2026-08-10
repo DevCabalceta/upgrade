@@ -25,4 +25,8 @@ public class InventarioService {
     public Inventario buscarPorId(Long id) {
         return inventarioRepository.findById(id).orElse(null);
     }
+
+    public void eliminar(Long id) {
+        inventarioRepository.deleteById(id);
+    }
 }
