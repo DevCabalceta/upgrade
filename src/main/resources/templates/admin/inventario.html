@@ -1,314 +1,502 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html th:replace="~{admin/layout/admin-layout :: layout('Inventario', 'inventario', ~{::#page-content})}"
+      xmlns:th="http://www.thymeleaf.org">
 
-    <head>
-        <meta charset="UTF-8">
-        <title>Inventario — Upgrade</title>
+<body>
 
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-              rel="stylesheet">
-    </head>
+<div id="page-content">
 
-    <body class="bg-light">
+    <!-- ENCABEZADO -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
 
-        <div class="container py-5">
+        <div>
+            <h1 class="text-2xl font-bold">
+                Inventario
+            </h1>
 
-            <h2 class="mb-4">
-                Crear elemento de inventario
+            <p class="text-sm text-muted-foreground mt-1">
+                Administra los equipos registrados en el sistema.
+            </p>
+        </div>
+
+    </div>
+
+
+    <!-- FORMULARIO -->
+    <div class="glass-card p-6 rounded-xl mb-6">
+
+        <div class="flex items-center gap-2 mb-5">
+
+            <i data-lucide="package-plus"
+               class="h-5 w-5 text-primary"></i>
+
+            <h2 class="text-lg font-semibold"
+                th:text="${inventario.id == null ? 'Agregar equipo' : 'Editar equipo'}">
+                Agregar equipo
             </h2>
 
-            <div class="card shadow-sm">
+        </div>
 
-                <div class="card-body">
 
-                    <form th:action="@{/admin/inventario/guardar}"
-                          th:object="${inventario}"
-                          method="post">
+        <form th:action="@{/admin/inventario/guardar}"
+              th:object="${inventario}"
+              method="post">
 
-                        <input type="hidden" th:field="*{id}">
+            <input type="hidden"
+                   th:field="*{id}">
 
-                        <div class="row">
 
-                            <div class="col-md-6 mb-3">
+            <!-- FILA 1 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
 
-                                <label class="form-label">
-                                    Código
-                                </label>
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        Código
+                    </label>
 
-                                <input type="text"
-                                       class="form-control"
-                                       th:field="*{codigo}"
-                                       required>
-
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-
-                                <label class="form-label">
-                                    Nombre
-                                </label>
-
-                                <input type="text"
-                                       class="form-control"
-                                       th:field="*{nombre}"
-                                       required>
-
-                            </div>
-
-                        </div>
-
-                        <div class="mb-3">
-
-                            <label class="form-label">
-                                Descripción
-                            </label>
-
-                            <textarea class="form-control"
-                                      th:field="*{descripcion}">
-                            </textarea>
-
-                        </div>
-
-                        <div class="row">
-
-                            <div class="col-md-6 mb-3">
-
-                                <label class="form-label">
-                                    Número de serie
-                                </label>
-
-                                <input type="text"
-                                       class="form-control"
-                                       th:field="*{numeroSerie}">
-
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-
-                                <label class="form-label">
-                                    Valor unitario
-                                </label>
-
-                                <input type="number"
-                                       step="0.01"
-                                       min="0"
-                                       class="form-control"
-                                       th:field="*{valorUnitario}"
-                                       required>
-
-                            </div>
-
-                        </div>
-
-                        <div class="row">
-
-                            <div class="col-md-6 mb-3">
-
-                                <label class="form-label">
-                                    Cantidad total
-                                </label>
-
-                                <input type="number"
-                                       min="0"
-                                       class="form-control"
-                                       th:field="*{cantidadTotal}"
-                                       required>
-
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-
-                                <label class="form-label">
-                                    Cantidad disponible
-                                </label>
-
-                                <input type="number"
-                                       min="0"
-                                       class="form-control"
-                                       th:field="*{cantidadDisponible}"
-                                       required>
-
-                            </div>
-
-                        </div>
-
-                        <div class="row">
-
-                            <div class="col-md-4 mb-3">
-
-                                <label class="form-label">
-                                    Estado
-                                </label>
-
-                                <select class="form-select"
-                                        th:field="*{estado}"
-                                        required>
-
-                                    <option value="">
-                                        Seleccione
-                                    </option>
-
-                                    <option value="En Bodega">
-                                        En Bodega
-                                    </option>
-
-                                    <option value="Prestado">
-                                        Prestado
-                                    </option>
-
-                                    <option value="Mantenimiento">
-                                        Mantenimiento
-                                    </option>
-
-                                </select>
-
-                            </div>
-
-                            <div class="col-md-4 mb-3">
-
-                                <label class="form-label">
-                                    Fecha de adquisición
-                                </label>
-
-                                <input type="date"
-                                       class="form-control"
-                                       th:field="*{fechaAdquisicion}">
-
-                            </div>
-
-                            <div class="col-md-4 mb-3">
-
-                                <label class="form-label">
-                                    Categoría
-                                </label>
-
-                                <select class="form-select"
-                                        th:field="*{categoria.id}"
-                                        required>
-
-                                    <option value="">
-                                        Seleccione
-                                    </option>
-
-                                    <option th:each="categoria : ${categorias}"
-                                            th:value="${categoria.id}"
-                                            th:text="${categoria.nombre}">
-                                    </option>
-
-                                </select>
-
-                            </div>
-
-                        </div>
-
-                        <button type="submit"
-                                class="btn btn-primary"
-                                th:text="${inventario.id == null ? 'Guardar' : 'Actualizar'}">
-                            Guardar
-                        </button>
-
-                    </form>
-                    <div class="card shadow-sm mt-4">
-
-                        <div class="card-body">
-
-                            <h3 class="mb-3">
-                                Lista de Inventario
-                            </h3>
-
-                            <div class="table-responsive">
-
-                                <table class="table table-striped table-hover">
-
-                                    <thead>
-                                        <tr>
-                                            <th>Código</th>
-                                            <th>Nombre</th>
-                                            <th>Descripción</th>
-                                            <th>Categoría</th>
-                                            <th>N.º Serie</th>
-                                            <th>Cantidad Total</th>
-                                            <th>Disponible</th>
-                                            <th>Estado</th>
-                                            <th>Valor Unitario</th>
-                                            <th>Fecha Adquisición</th>
-                                            <th>Acciones</th>
-                                        </tr>
-                                    </thead>
-
-                                    <tbody>
-
-                                        <tr th:each="item : ${inventarios}">
-
-                                            <td th:text="${item.codigo}">
-                                                Código
-                                            </td>
-
-                                            <td th:text="${item.nombre}">
-                                                Nombre
-                                            </td>
-
-                                            <td th:text="${item.descripcion}">
-                                                Descripción
-                                            </td>
-
-                                            <td th:text="${item.categoria.nombre}">
-                                                Categoría
-                                            </td>
-
-                                            <td th:text="${item.numeroSerie}">
-                                                Serie
-                                            </td>
-
-                                            <td th:text="${item.cantidadTotal}">
-                                                0
-                                            </td>
-
-                                            <td th:text="${item.cantidadDisponible}">
-                                                0
-                                            </td>
-
-                                            <td th:text="${item.estado}">
-                                                Estado
-                                            </td>
-
-                                            <td th:text="${item.valorUnitario}">
-                                                0
-                                            </td>
-
-                                            <td th:text="${item.fechaAdquisicion}">
-                                                Fecha
-                                            </td>
-
-                                            <td>
-                                                <a th:href="@{/admin/inventario/editar/{id}(id=${item.id})}"
-                                                   class="btn btn-warning btn-sm">
-                                                    Editar
-                                                </a>
-                                                <a th:href="@{/admin/inventario/eliminar/{id}(id=${item.id})}"
-                                                   class="btn btn-danger btn-sm"
-                                                   onclick="return confirm('¿Está seguro de eliminar este elemento del inventario?')">
-                                                    Eliminar
-                                                </a>
-
-                                            </td>
-
-                                        </tr>
-
-                                    </tbody>
-
-                                </table>
-
-                            </div>
-
-                        </div>
-
-                    </div>
+                    <input type="text"
+                           th:field="*{codigo}"
+                           placeholder="Ej: AUD-002"
+                           required
+                           class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring">
                 </div>
+
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        Nombre
+                    </label>
+
+                    <input type="text"
+                           th:field="*{nombre}"
+                           placeholder="Nombre del equipo"
+                           required
+                           class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring">
+                </div>
+
+            </div>
+
+
+            <!-- DESCRIPCION -->
+            <div class="mb-4">
+
+                <label class="block text-sm font-medium mb-2">
+                    Descripción
+                </label>
+
+                <textarea th:field="*{descripcion}"
+                          rows="3"
+                          placeholder="Descripción del equipo"
+                          class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"></textarea>
+
+            </div>
+
+
+            <!-- FILA 2 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+
+                <div>
+
+                    <label class="block text-sm font-medium mb-2">
+                        Número de serie
+                    </label>
+
+                    <input type="text"
+                           th:field="*{numeroSerie}"
+                           placeholder="Número de serie"
+                           class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring">
+
+                </div>
+
+
+                <div>
+
+                    <label class="block text-sm font-medium mb-2">
+                        Valor unitario
+                    </label>
+
+                    <input type="number"
+                           th:field="*{valorUnitario}"
+                           step="0.01"
+                           min="0"
+                           required
+                           placeholder="0.00"
+                           class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring">
+
+                </div>
+
+
+                <div>
+
+                    <label class="block text-sm font-medium mb-2">
+                        Categoría
+                    </label>
+
+                    <select th:field="*{categoria.id}"
+                            required
+                            class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring">
+
+                        <option value="">
+                            Seleccione
+                        </option>
+
+                        <option th:each="categoria : ${categorias}"
+                                th:value="${categoria.id}"
+                                th:text="${categoria.nombre}">
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <!-- FILA 3 -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-5">
+
+                <div>
+
+                    <label class="block text-sm font-medium mb-2">
+                        Cantidad total
+                    </label>
+
+                    <input type="number"
+                           th:field="*{cantidadTotal}"
+                           min="0"
+                           required
+                           class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring">
+
+                </div>
+
+
+                <div>
+
+                    <label class="block text-sm font-medium mb-2">
+                        Disponible
+                    </label>
+
+                    <input type="number"
+                           th:field="*{cantidadDisponible}"
+                           min="0"
+                           required
+                           class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring">
+
+                </div>
+
+
+                <div>
+
+                    <label class="block text-sm font-medium mb-2">
+                        Estado
+                    </label>
+
+                    <select th:field="*{estado}"
+                            required
+                            class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring">
+
+                        <option value="">
+                            Seleccione
+                        </option>
+
+                        <option value="En Bodega">
+                            En Bodega
+                        </option>
+
+                        <option value="Prestado">
+                            Prestado
+                        </option>
+
+                        <option value="Mantenimiento">
+                            Mantenimiento
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div>
+
+                    <label class="block text-sm font-medium mb-2">
+                        Fecha de adquisición
+                    </label>
+
+                    <input type="date"
+                           th:field="*{fechaAdquisicion}"
+                           class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring">
+
+                </div>
+
+            </div>
+
+
+            <!-- BOTONES -->
+            <div class="flex flex-wrap gap-3">
+
+                <button type="submit"
+                        class="btn btn-default btn-size-default">
+
+                    <i data-lucide="save"></i>
+
+                    <span th:text="${inventario.id == null ? 'Guardar equipo' : 'Actualizar equipo'}">
+                        Guardar equipo
+                    </span>
+
+                </button>
+
+
+                <a th:if="${inventario.id != null}"
+                   th:href="@{/admin/inventario}"
+                   class="btn btn-outline btn-size-default">
+
+                    <i data-lucide="x"></i>
+
+                    Cancelar
+
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- LISTADO -->
+    <div class="glass-card rounded-xl overflow-hidden">
+
+        <div class="flex items-center justify-between gap-4 p-6 border-b border-border">
+
+            <div>
+
+                <div class="flex items-center gap-2">
+
+                    <i data-lucide="package"
+                       class="h-5 w-5 text-primary"></i>
+
+                    <h2 class="text-lg font-semibold">
+                        Equipos registrados
+                    </h2>
+
+                </div>
+
+                <p class="text-sm text-muted-foreground mt-1">
+                    Lista de elementos del inventario.
+                </p>
+
+            </div>
+
+
+            <div class="px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">
+
+                <span th:text="${#lists.size(inventarios)}">
+                    0
+                </span>
+
+                registros
 
             </div>
 
         </div>
 
-    </body>
+
+        <div class="overflow-x-auto">
+
+            <table class="w-full text-sm">
+
+                <thead class="bg-muted/50">
+
+                <tr class="border-b border-border text-left">
+
+                    <th class="px-5 py-3 font-medium text-muted-foreground">
+                        Código
+                    </th>
+
+                    <th class="px-5 py-3 font-medium text-muted-foreground">
+                        Nombre
+                    </th>
+
+                    <th class="px-5 py-3 font-medium text-muted-foreground">
+                        Categoría
+                    </th>
+
+                    <th class="px-5 py-3 font-medium text-muted-foreground">
+                        Serie
+                    </th>
+
+                    <th class="px-5 py-3 font-medium text-muted-foreground">
+                        Total
+                    </th>
+
+                    <th class="px-5 py-3 font-medium text-muted-foreground">
+                        Disponible
+                    </th>
+
+                    <th class="px-5 py-3 font-medium text-muted-foreground">
+                        Estado
+                    </th>
+
+                    <th class="px-5 py-3 font-medium text-muted-foreground">
+                        Valor
+                    </th>
+
+                    <th class="px-5 py-3 font-medium text-muted-foreground">
+                        Fecha
+                    </th>
+
+                    <th class="px-5 py-3 font-medium text-muted-foreground text-center">
+                        Acciones
+                    </th>
+
+                </tr>
+
+                </thead>
+
+
+                <tbody>
+
+
+                <!-- SIN REGISTROS -->
+                <tr th:if="${#lists.isEmpty(inventarios)}">
+
+                    <td colspan="10"
+                        class="px-5 py-12 text-center text-muted-foreground">
+
+                        <i data-lucide="package-open"
+                           class="h-10 w-10 mx-auto mb-3 opacity-50"></i>
+
+                        <p>
+                            No hay equipos registrados.
+                        </p>
+
+                    </td>
+
+                </tr>
+
+
+                <!-- REGISTROS -->
+                <tr th:each="item : ${inventarios}"
+                    class="border-b border-border last:border-0 hover:bg-muted/40 transition-colors">
+
+                    <td class="px-5 py-4">
+
+                        <span class="font-semibold text-primary"
+                              th:text="${item.codigo}">
+                            AUD-001
+                        </span>
+
+                    </td>
+
+
+                    <td class="px-5 py-4">
+
+                        <div class="font-medium"
+                             th:text="${item.nombre}">
+                            Equipo
+                        </div>
+
+                        <div class="text-xs text-muted-foreground mt-1 max-w-[220px] truncate"
+                             th:text="${item.descripcion}">
+                            Descripción
+                        </div>
+
+                    </td>
+
+
+                    <td class="px-5 py-4"
+                        th:text="${item.categoria.nombre}">
+                        Categoría
+                    </td>
+
+
+                    <td class="px-5 py-4 text-muted-foreground"
+                        th:text="${item.numeroSerie}">
+                        Serie
+                    </td>
+
+
+                    <td class="px-5 py-4"
+                        th:text="${item.cantidadTotal}">
+                        0
+                    </td>
+
+
+                    <td class="px-5 py-4">
+
+                        <span class="font-semibold text-success"
+                              th:text="${item.cantidadDisponible}">
+                            0
+                        </span>
+
+                    </td>
+
+
+                    <td class="px-5 py-4">
+
+                        <span class="inline-flex items-center rounded-full bg-primary/10 text-primary px-2.5 py-1 text-xs font-medium"
+                              th:text="${item.estado}">
+                            En Bodega
+                        </span>
+
+                    </td>
+
+
+                    <td class="px-5 py-4 whitespace-nowrap">
+
+                        ₡<span th:text="${item.valorUnitario}">
+                            0
+                        </span>
+
+                    </td>
+
+
+                    <td class="px-5 py-4 text-muted-foreground whitespace-nowrap"
+                        th:text="${item.fechaAdquisicion}">
+                        Fecha
+                    </td>
+
+
+                    <!-- ACCIONES -->
+                    <td class="px-5 py-4">
+
+                        <div class="flex items-center justify-center gap-2">
+
+                            <!-- EDITAR -->
+                            <a th:href="@{/admin/inventario/editar/{id}(id=${item.id})}"
+                               class="btn btn-outline btn-size-icon"
+                               title="Editar">
+
+                                <i data-lucide="pencil"></i>
+
+                            </a>
+
+
+                            <!-- ELIMINAR -->
+                            <a th:href="@{/admin/inventario/eliminar/{id}(id=${item.id})}"
+                               class="btn btn-destructive btn-size-icon"
+                               title="Eliminar"
+                               onclick="return confirm('¿Está seguro de eliminar este elemento del inventario?')">
+
+                                <i data-lucide="trash-2"></i>
+
+                            </a>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
 </html>
