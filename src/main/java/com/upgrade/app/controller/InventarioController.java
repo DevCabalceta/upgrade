@@ -24,20 +24,25 @@ public class InventarioController {
     }
 
     @GetMapping
-    public String mostrarFormulario(Model model) {
+public String mostrarInventario(Model model) {
 
-        model.addAttribute(
-                "inventario",
-                new Inventario()
-        );
+    model.addAttribute(
+            "inventario",
+            new Inventario()
+    );
 
-        model.addAttribute(
-                "categorias",
-                categoriaService.listar()
-        );
+    model.addAttribute(
+            "categorias",
+            categoriaService.listar()
+    );
 
-        return "admin/inventario";
-    }
+    model.addAttribute(
+            "inventarios",
+            inventarioService.listar()
+    );
+
+    return "admin/inventario";
+}
 
     @PostMapping("/guardar")
     public String guardar(
