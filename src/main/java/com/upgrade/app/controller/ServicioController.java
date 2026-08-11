@@ -32,9 +32,7 @@ public class ServicioController {
     ) {
         Page<Servicio> servicios = servicioService.listar(page, TAMANO_PAGINA);
         model.addAttribute("servicios", servicios);
-        if (!model.containsAttribute("nuevoServicio")) {
-            model.addAttribute("nuevoServicio", new ServicioForm());
-        }
+        agregarFormulariosSiFaltan(model);
         return "admin/servicios";
     }
 
@@ -47,9 +45,9 @@ public class ServicioController {
     ) {
         validarUnicos(form, bindingResult);
         if (bindingResult.hasErrors()) {
+            model.addAttribute("editarServicio", new ServicioForm());
             model.addAttribute("modalAbierto", "nuevo");
-            Page<Servicio> servicios = servicioService.listar(0, TAMANO_PAGINA);
-            model.addAttribute("servicios", servicios);
+            model.addAttribute("servicios", servicioService.listar(0, TAMANO_PAGINA));
             return "admin/servicios";
         }
 
@@ -59,6 +57,43 @@ public class ServicioController {
                 "El servicio “" + servicio.getNombre() + "” fue creado correctamente."
         );
         return "redirect:/admin/servicios";
+    }
+
+    @PostMapping("/editar")
+    public String editar(
+            @Valid @ModelAttribute("editarServicio") ServicioForm form,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes
+    ) {
+        if (form.getId() == null) {
+            bindingResult.reject("servicio.id.requerido", "No fue posible identificar el servicio.");
+        } else {
+            validarUnicos(form, bindingResult);
+        }
+
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("nuevoServicio", new ServicioForm());
+            model.addAttribute("modalAbierto", "editar");
+            model.addAttribute("servicios", servicioService.listar(0, TAMANO_PAGINA));
+            return "admin/servicios";
+        }
+
+        Servicio servicio = servicioService.actualizar(form);
+        redirectAttributes.addFlashAttribute(
+                "mensajeExito",
+                "Los datos de “" + servicio.getNombre() + "” fueron actualizados."
+        );
+        return "redirect:/admin/servicios";
+    }
+
+    private void agregarFormulariosSiFaltan(Model model) {
+        if (!model.containsAttribute("nuevoServicio")) {
+            model.addAttribute("nuevoServicio", new ServicioForm());
+        }
+        if (!model.containsAttribute("editarServicio")) {
+            model.addAttribute("editarServicio", new ServicioForm());
+        }
     }
 
     private void validarUnicos(ServicioForm form, BindingResult bindingResult) {

@@ -30,11 +30,17 @@
                     <th class="px-4 py-3 font-semibold">Descripción</th>
                     <th class="px-4 py-3 font-semibold">Precio base</th>
                     <th class="px-4 py-3 font-semibold">Estado</th>
+                    <th class="px-5 py-3 text-right font-semibold">Acciones</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr th:each="servicio : ${servicios.content}"
-                    class="border-b border-border transition last:border-0 hover:bg-muted/30">
+                    class="service-record border-b border-border transition last:border-0 hover:bg-muted/30"
+                    th:data-service-id="${servicio.id}"
+                    th:data-service-nombre="${servicio.nombre}"
+                    th:data-service-descripcion="${servicio.descripcion}"
+                    th:data-service-precio="${servicio.precioBase}"
+                    th:data-service-activo="${servicio.activo}">
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
                             <span class="brand-gradient flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-black text-black"
@@ -60,6 +66,14 @@
                               class="inline-flex rounded-md border border-red-500/30 bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:border-red-500/40 dark:bg-red-950/50 dark:text-red-400">
                             Inactivo
                         </span>
+                    </td>
+                    <td class="px-5 py-4">
+                        <div class="flex items-center justify-end gap-1">
+                            <button type="button" data-service-action="edit" title="Editar"
+                                    class="js-service-action flex h-8 w-8 items-center justify-center rounded-lg border border-amber-300 bg-amber-50/40 text-amber-600 transition hover:bg-amber-50 hover:text-amber-700 dark:border-amber-900/80 dark:bg-amber-950/20 dark:text-amber-400">
+                                <i data-lucide="edit" class="h-4 w-4"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 </tbody>
@@ -123,6 +137,64 @@
                     <button type="button" class="js-service-close-modal btn btn-ghost btn-size-default">Cancelar</button>
                     <button type="submit" class="btn btn-default btn-size-default font-semibold">
                         <i data-lucide="save"></i>Guardar servicio
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal editar servicio -->
+    <div id="modal-edit-service" class="service-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div class="service-modal-panel flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6">
+                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                    <i data-lucide="edit" class="h-5 w-5"></i>
+                </div>
+                <div class="min-w-0 flex-1 pr-8">
+                    <h2 class="text-lg font-semibold">Editar servicio</h2>
+                    <p id="edit-service-subtitle" class="mt-1 text-sm text-muted-foreground">Actualiza los datos del servicio.</p>
+                </div>
+                <button type="button" class="js-service-close-modal absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent">
+                    <i data-lucide="x" class="h-4 w-4"></i>
+                </button>
+            </div>
+
+            <form id="edit-service-form" th:action="@{/admin/servicios/editar}" th:object="${editarServicio}" method="post"
+                  class="flex min-h-0 flex-1 flex-col" novalidate>
+                <input id="edit-service-id" th:field="*{id}" type="hidden">
+                <div class="flex-1 space-y-4 overflow-y-auto px-6 py-5">
+                    <div class="space-y-1.5">
+                        <label for="edit-service-name" class="text-xs font-semibold">Nombre <span class="text-destructive">*</span></label>
+                        <input id="edit-service-name" th:field="*{nombre}" required maxlength="150"
+                               class="service-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                        <p th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="text-xs text-destructive"></p>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label for="edit-service-description" class="text-xs font-semibold">Descripción</label>
+                        <textarea id="edit-service-description" th:field="*{descripcion}" maxlength="255" rows="3"
+                                  class="service-form-control w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"></textarea>
+                        <p th:if="${#fields.hasErrors('descripcion')}" th:errors="*{descripcion}" class="text-xs text-destructive"></p>
+                    </div>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="space-y-1.5">
+                            <label for="edit-service-price" class="text-xs font-semibold">Precio base (₡) <span class="text-destructive">*</span></label>
+                            <input id="edit-service-price" th:field="*{precioBase}" required type="number" step="0.01" min="0"
+                                   class="service-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                            <p th:if="${#fields.hasErrors('precioBase')}" th:errors="*{precioBase}" class="text-xs text-destructive"></p>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-semibold">Estado</label>
+                            <label class="flex h-9 items-center gap-2 rounded-md border border-input px-3 text-sm">
+                                <input id="edit-service-active" th:field="*{activo}" type="checkbox" class="h-4 w-4 rounded border-input">
+                                Servicio activo
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 border-t border-border bg-muted/30 px-6 py-4">
+                    <button type="button" class="js-service-close-modal btn btn-ghost btn-size-default">Cancelar</button>
+                    <button type="submit" class="btn btn-default btn-size-default font-semibold">
+                        <i data-lucide="save"></i>Guardar cambios
                     </button>
                 </div>
             </form>

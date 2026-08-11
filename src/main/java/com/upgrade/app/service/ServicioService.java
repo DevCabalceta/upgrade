@@ -49,6 +49,13 @@ public class ServicioService {
         return servicioRepository.save(servicio);
     }
 
+    @Transactional
+    public Servicio actualizar(ServicioForm form) {
+        Servicio servicio = obtenerPorId(form.getId());
+        copiarFormulario(form, servicio);
+        return servicioRepository.save(servicio);
+    }
+
     private void copiarFormulario(ServicioForm form, Servicio servicio) {
         servicio.setNombre(limpiar(form.getNombre()));
         servicio.setDescripcion(limpiarOpcional(form.getDescripcion()));

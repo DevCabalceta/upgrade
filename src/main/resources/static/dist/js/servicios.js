@@ -20,6 +20,19 @@
         }
     }
 
+    function valueOrDash(value) {
+        return value && String(value).trim() ? value : '—';
+    }
+
+    function fillEdit(service) {
+        $('#edit-service-id').val(service.serviceId);
+        $('#edit-service-name').val(service.serviceNombre);
+        $('#edit-service-description').val(service.serviceDescripcion || '');
+        $('#edit-service-price').val(service.servicePrecio);
+        $('#edit-service-active').prop('checked', String(service.serviceActivo) === 'true');
+        $('#edit-service-subtitle').text(`Actualiza los datos de ${valueOrDash(service.serviceNombre)}.`);
+    }
+
     function validateForm(form) {
         const $form = $(form);
         $form.find('.service-form-control').removeClass('border-destructive ring-1 ring-destructive');
@@ -52,6 +65,17 @@
             showModal('#modal-new-service');
         });
 
+        $(document).on('click', '.js-service-action', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            const service = $(this).closest('.service-record').data();
+            const action = $(this).data('serviceAction');
+            if (action === 'edit') {
+                fillEdit(service);
+                showModal('#modal-edit-service');
+            }
+        });
+
         $('.js-service-close-modal').on('click', function () {
             closeModal($(this).closest('.service-modal'));
         });
@@ -70,7 +94,7 @@
             }
         });
 
-        $('#new-service-form').on('submit', function (event) {
+        $('#new-service-form, #edit-service-form').on('submit', function (event) {
             if (!validateForm(this)) {
                 event.preventDefault();
             }
@@ -88,8 +112,11 @@
             });
         }
 
-        if ($page.attr('data-open-modal') === 'nuevo') {
+        const openModal = $page.attr('data-open-modal');
+        if (openModal === 'nuevo') {
             showModal('#modal-new-service');
+        } else if (openModal === 'editar') {
+            showModal('#modal-edit-service');
         }
     });
 })(jQuery);
