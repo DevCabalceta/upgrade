@@ -1,16 +1,202 @@
 <!DOCTYPE html>
-<html th:replace="~{admin/layout/admin-layout :: layout('Préstamos', 'prestamos', ~{::#page-content})}" xmlns:th="http://www.thymeleaf.org">
+<html th:replace="~{admin/layout/admin-layout :: layout('Préstamos', 'prestamos', ~{::#page-content})}"
+      xmlns:th="http://www.thymeleaf.org">
+
 <body>
 
-    <div id="page-content">
-        
-        <h1 class="text-2xl font-bold mb-4">Módulo de Préstamos</h1>
-        
-        <div class="glass-card p-6 rounded-xl">
-            <p>Aquí va la tabla o el contenido del Préstamos...</p>
+<div id="page-content">
+
+    <h1 class="text-2xl font-bold mb-4">Préstamos</h1>
+
+    <!-- FORMULARIO -->
+    <div class="glass-card p-6 rounded-xl mb-6">
+
+        <h2 class="text-lg font-semibold mb-4">Registrar préstamo</h2>
+
+        <form th:action="@{/admin/prestamos/guardar}"
+              th:object="${prestamo}"
+              method="post">
+
+            <input type="hidden" th:field="*{id}">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <!-- EQUIPO -->
+                <div>
+                    <label class="block mb-2">Equipo</label>
+
+                    <select th:field="*{inventario}"
+                            class="w-full rounded-lg p-2"
+                            required>
+
+                        <option value="">Seleccione un equipo</option>
+
+                        <option th:each="equipo : ${inventarios}"
+                                th:value="${equipo.id}"
+                                th:text="${equipo.codigo + ' - ' + equipo.nombre + ' (Disponibles: ' + equipo.cantidadDisponible + ')'}">
+                        </option>
+
+                    </select>
+                </div>
+
+                <!-- CANTIDAD -->
+                <div>
+                    <label class="block mb-2">Cantidad</label>
+
+                    <input type="number"
+                           th:field="*{cantidad}"
+                           min="1"
+                           class="w-full rounded-lg p-2"
+                           required>
+                </div>
+
+                <!-- RESPONSABLE -->
+                <div>
+                    <label class="block mb-2">Responsable</label>
+
+                    <input type="text"
+                           th:field="*{responsable}"
+                           class="w-full rounded-lg p-2"
+                           placeholder="Nombre del responsable"
+                           required>
+                </div>
+
+                <!-- FECHA PRESTAMO -->
+                <div>
+                    <label class="block mb-2">Fecha de préstamo</label>
+
+                    <input type="date"
+                           th:field="*{fechaPrestamo}"
+                           class="w-full rounded-lg p-2"
+                           required>
+                </div>
+
+                <!-- FECHA DEVOLUCION -->
+                <div>
+                    <label class="block mb-2">Fecha de devolución</label>
+
+                    <input type="date"
+                           th:field="*{fechaDevolucion}"
+                           class="w-full rounded-lg p-2">
+                </div>
+
+                <!-- ESTADO -->
+                <div>
+                    <label class="block mb-2">Estado</label>
+
+                    <select th:field="*{estado}"
+                            class="w-full rounded-lg p-2"
+                            required>
+
+                        <option value="">Seleccione</option>
+                        <option value="Prestado">Prestado</option>
+                        <option value="Devuelto">Devuelto</option>
+
+                    </select>
+                </div>
+
+            </div>
+
+            <!-- OBSERVACIONES -->
+            <div class="mt-4">
+
+                <label class="block mb-2">Observaciones</label>
+
+                <textarea th:field="*{observaciones}"
+                          class="w-full rounded-lg p-2"
+                          rows="3"
+                          placeholder="Observaciones del préstamo"></textarea>
+
+            </div>
+
+            <div class="mt-4">
+
+                <button type="submit"
+                        class="btn btn-primary">
+
+                    Guardar préstamo
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+    <!-- TABLA -->
+    <div class="glass-card p-6 rounded-xl">
+
+        <h2 class="text-lg font-semibold mb-4">Préstamos registrados</h2>
+
+        <div class="overflow-x-auto">
+
+            <table class="table w-full">
+
+                <thead>
+
+                <tr>
+                    <th>Equipo</th>
+                    <th>Responsable</th>
+                    <th>Cantidad</th>
+                    <th>Fecha préstamo</th>
+                    <th>Fecha devolución</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+
+                </thead>
+
+                <tbody>
+
+                <tr th:each="prestamoItem : ${prestamos}">
+
+                    <td th:text="${prestamoItem.inventario.nombre}"></td>
+
+                    <td th:text="${prestamoItem.responsable}"></td>
+
+                    <td th:text="${prestamoItem.cantidad}"></td>
+
+                    <td th:text="${prestamoItem.fechaPrestamo}"></td>
+
+                    <td th:text="${prestamoItem.fechaDevolucion}"></td>
+
+                    <td th:text="${prestamoItem.estado}"></td>
+
+                    <td>
+
+                        <a th:href="@{/admin/prestamos/editar/{id}(id=${prestamoItem.id})}"
+                           class="btn btn-sm">
+                            Editar
+                        </a>
+
+                        <a th:href="@{/admin/prestamos/eliminar/{id}(id=${prestamoItem.id})}"
+                           class="btn btn-sm btn-error"
+                           onclick="return confirm('¿Desea eliminar este préstamo?')">
+                            Eliminar
+                        </a>
+
+                    </td>
+
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(prestamos)}">
+
+                    <td colspan="7" class="text-center">
+                        No hay préstamos registrados.
+                    </td>
+
+                </tr>
+
+                </tbody>
+
+            </table>
+
         </div>
 
     </div>
+
+</div>
 
 </body>
 </html>
