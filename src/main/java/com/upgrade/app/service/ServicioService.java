@@ -56,6 +56,13 @@ public class ServicioService {
         return servicioRepository.save(servicio);
     }
 
+    @Transactional
+    public void eliminarLogicamente(Long id) {
+        Servicio servicio = obtenerPorId(id);
+        servicio.setActivo(false);
+        servicioRepository.save(servicio);
+    }
+
     private void copiarFormulario(ServicioForm form, Servicio servicio) {
         servicio.setNombre(limpiar(form.getNombre()));
         servicio.setDescripcion(limpiarOpcional(form.getDescripcion()));

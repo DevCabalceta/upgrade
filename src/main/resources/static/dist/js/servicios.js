@@ -33,6 +33,11 @@
         $('#edit-service-subtitle').text(`Actualiza los datos de ${valueOrDash(service.serviceNombre)}.`);
     }
 
+    function fillDelete(service) {
+        $('#delete-service-id').val(service.serviceId);
+        $('#delete-service-name').text(`“${valueOrDash(service.serviceNombre)}”`);
+    }
+
     function validateForm(form) {
         const $form = $(form);
         $form.find('.service-form-control').removeClass('border-destructive ring-1 ring-destructive');
@@ -68,11 +73,17 @@
         $(document).on('click', '.js-service-action', function (event) {
             event.preventDefault();
             event.stopPropagation();
+            if ($(this).prop('disabled')) {
+                return;
+            }
             const service = $(this).closest('.service-record').data();
             const action = $(this).data('serviceAction');
             if (action === 'edit') {
                 fillEdit(service);
                 showModal('#modal-edit-service');
+            } else if (action === 'delete') {
+                fillDelete(service);
+                showModal('#modal-delete-service');
             }
         });
 
@@ -98,6 +109,28 @@
             if (!validateForm(this)) {
                 event.preventDefault();
             }
+        });
+
+        $('#delete-service-form').on('submit', function (event) {
+            if (!window.Swal || $(this).data('confirmed')) {
+                return;
+            }
+            event.preventDefault();
+            const form = this;
+            Swal.fire({
+                icon: 'warning',
+                title: '¿Desactivar este servicio?',
+                text: 'El servicio dejará de estar disponible para nuevas cotizaciones.',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, desactivar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#dc2626'
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    $(form).data('confirmed', true);
+                    form.submit();
+                }
+            });
         });
 
         const $page = $('#page-content');

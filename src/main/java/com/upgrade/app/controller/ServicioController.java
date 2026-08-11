@@ -87,6 +87,20 @@ public class ServicioController {
         return "redirect:/admin/servicios";
     }
 
+    @PostMapping("/eliminar")
+    public String eliminar(
+            @RequestParam Long id,
+            RedirectAttributes redirectAttributes
+    ) {
+        Servicio servicio = servicioService.obtenerPorId(id);
+        servicioService.eliminarLogicamente(id);
+        redirectAttributes.addFlashAttribute(
+                "mensajeExito",
+                "El servicio “" + servicio.getNombre() + "” fue desactivado correctamente."
+        );
+        return "redirect:/admin/servicios";
+    }
+
     private void agregarFormulariosSiFaltan(Model model) {
         if (!model.containsAttribute("nuevoServicio")) {
             model.addAttribute("nuevoServicio", new ServicioForm());

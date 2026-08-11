@@ -73,6 +73,11 @@
                                     class="js-service-action flex h-8 w-8 items-center justify-center rounded-lg border border-amber-300 bg-amber-50/40 text-amber-600 transition hover:bg-amber-50 hover:text-amber-700 dark:border-amber-900/80 dark:bg-amber-950/20 dark:text-amber-400">
                                 <i data-lucide="edit" class="h-4 w-4"></i>
                             </button>
+                            <button type="button" data-service-action="delete" title="Desactivar"
+                                    th:disabled="${!servicio.activo}"
+                                    class="js-service-action flex h-8 w-8 items-center justify-center rounded-lg border border-red-300 bg-red-50/40 text-red-600 transition hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-red-900/80 dark:bg-red-950/20 dark:text-red-400">
+                                <i data-lucide="trash-2" class="h-4 w-4"></i>
+                            </button>
                         </div>
                     </td>
                 </tr>
@@ -196,6 +201,40 @@
                     <button type="submit" class="btn btn-default btn-size-default font-semibold">
                         <i data-lucide="save"></i>Guardar cambios
                     </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal desactivar servicio -->
+    <div id="modal-delete-service" class="service-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div class="service-modal-panel flex max-h-[92vh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6">
+                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-destructive/15 text-destructive">
+                    <i data-lucide="alert-triangle" class="h-5 w-5"></i>
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-lg font-semibold">Desactivar servicio</h2>
+                    <p class="mt-1 text-sm text-muted-foreground">El registro y sus relaciones se conservarán.</p>
+                </div>
+                <button type="button" class="js-service-close-modal absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent">
+                    <i data-lucide="x" class="h-4 w-4"></i>
+                </button>
+            </div>
+            <form id="delete-service-form" th:action="@{/admin/servicios/eliminar}" method="post">
+                <input id="delete-service-id" name="id" type="hidden">
+                <div class="px-6 py-5">
+                    <p class="text-sm text-muted-foreground">
+                        Se desactivará <strong id="delete-service-name" class="text-foreground">el servicio</strong>.
+                        No podrá utilizarse en cotizaciones nuevas, pero su historial permanecerá intacto.
+                    </p>
+                    <div class="mt-4 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-xs text-destructive">
+                        Esta operación puede revertirse editando nuevamente el estado del servicio.
+                    </div>
+                </div>
+                <div class="flex justify-between gap-2 border-t border-border bg-muted/30 px-6 py-4">
+                    <button type="button" class="js-service-close-modal btn btn-ghost btn-size-default">Cancelar</button>
+                    <button type="submit" class="btn btn-destructive btn-size-default font-semibold">Desactivar servicio</button>
                 </div>
             </form>
         </div>
