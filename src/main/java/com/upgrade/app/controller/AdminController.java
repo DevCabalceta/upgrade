@@ -25,10 +25,10 @@ public class AdminController {
         return "admin/inventario";
     }
 
-    @GetMapping("/servicios")
-    public String servicios() {
-        return "admin/servicios";
-    }
+//    @GetMapping("/servicios")
+//    public String servicios() {
+//        return "admin/servicios";
+//    }
 
     @GetMapping("/cotizaciones")
     public String cotizaciones() {
