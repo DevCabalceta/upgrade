@@ -8,6 +8,17 @@
 
     <h1 class="text-2xl font-bold mb-4">Préstamos</h1>
 
+    <!-- MENSAJES -->
+    <div th:if="${mensaje}"
+         class="glass-card p-4 rounded-xl mb-4">
+        <p th:text="${mensaje}"></p>
+    </div>
+
+    <div th:if="${error}"
+         class="glass-card p-4 rounded-xl mb-4">
+        <p th:text="${error}"></p>
+    </div>
+
     <!-- FORMULARIO -->
     <div class="glass-card p-6 rounded-xl mb-6">
 
@@ -17,11 +28,8 @@
               th:object="${prestamo}"
               method="post">
 
-            <input type="hidden" th:field="*{id}">
-
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                <!-- EQUIPO -->
                 <div>
                     <label class="block mb-2">Equipo</label>
 
@@ -39,7 +47,6 @@
                     </select>
                 </div>
 
-                <!-- CANTIDAD -->
                 <div>
                     <label class="block mb-2">Cantidad</label>
 
@@ -50,7 +57,6 @@
                            required>
                 </div>
 
-                <!-- RESPONSABLE -->
                 <div>
                     <label class="block mb-2">Responsable</label>
 
@@ -61,7 +67,6 @@
                            required>
                 </div>
 
-                <!-- FECHA PRESTAMO -->
                 <div>
                     <label class="block mb-2">Fecha de préstamo</label>
 
@@ -71,7 +76,6 @@
                            required>
                 </div>
 
-                <!-- FECHA DEVOLUCION -->
                 <div>
                     <label class="block mb-2">Fecha de devolución</label>
 
@@ -80,24 +84,8 @@
                            class="w-full rounded-lg p-2">
                 </div>
 
-                <!-- ESTADO -->
-                <div>
-                    <label class="block mb-2">Estado</label>
-
-                    <select th:field="*{estado}"
-                            class="w-full rounded-lg p-2"
-                            required>
-
-                        <option value="">Seleccione</option>
-                        <option value="Prestado">Prestado</option>
-                        <option value="Devuelto">Devuelto</option>
-
-                    </select>
-                </div>
-
             </div>
 
-            <!-- OBSERVACIONES -->
             <div class="mt-4">
 
                 <label class="block mb-2">Observaciones</label>
@@ -113,9 +101,7 @@
 
                 <button type="submit"
                         class="btn btn-primary">
-
                     Guardar préstamo
-
                 </button>
 
             </div>
@@ -134,59 +120,56 @@
             <table class="table w-full">
 
                 <thead>
-
-                <tr>
-                    <th>Equipo</th>
-                    <th>Responsable</th>
-                    <th>Cantidad</th>
-                    <th>Fecha préstamo</th>
-                    <th>Fecha devolución</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                </tr>
-
+                    <tr>
+                        <th>Equipo</th>
+                        <th>Responsable</th>
+                        <th>Cantidad</th>
+                        <th>Fecha préstamo</th>
+                        <th>Fecha devolución</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
                 </thead>
 
                 <tbody>
 
-                <tr th:each="prestamoItem : ${prestamos}">
+                    <tr th:each="prestamoItem : ${prestamos}">
 
-                    <td th:text="${prestamoItem.inventario.nombre}"></td>
+                        <td th:text="${prestamoItem.inventario.nombre}"></td>
 
-                    <td th:text="${prestamoItem.responsable}"></td>
+                        <td th:text="${prestamoItem.responsable}"></td>
 
-                    <td th:text="${prestamoItem.cantidad}"></td>
+                        <td th:text="${prestamoItem.cantidad}"></td>
 
-                    <td th:text="${prestamoItem.fechaPrestamo}"></td>
+                        <td th:text="${prestamoItem.fechaPrestamo}"></td>
 
-                    <td th:text="${prestamoItem.fechaDevolucion}"></td>
+                        <td th:text="${prestamoItem.fechaDevolucion}"></td>
 
-                    <td th:text="${prestamoItem.estado}"></td>
+                        <td th:text="${prestamoItem.estado}"></td>
 
-                    <td>
+                        <td>
 
-                        <a th:href="@{/admin/prestamos/editar/{id}(id=${prestamoItem.id})}"
-                           class="btn btn-sm">
-                            Editar
-                        </a>
+                            <a th:if="${prestamoItem.estado != 'Devuelto'}"
+                               th:href="@{/admin/prestamos/devolver/{id}(id=${prestamoItem.id})}"
+                               class="btn btn-sm">
+                                Devolver
+                            </a>
 
-                        <a th:href="@{/admin/prestamos/eliminar/{id}(id=${prestamoItem.id})}"
-                           class="btn btn-sm btn-error"
-                           onclick="return confirm('¿Desea eliminar este préstamo?')">
-                            Eliminar
-                        </a>
+                            <a th:href="@{/admin/prestamos/eliminar/{id}(id=${prestamoItem.id})}"
+                               class="btn btn-sm btn-error"
+                               onclick="return confirm('¿Desea eliminar este préstamo?')">
+                                Eliminar
+                            </a>
 
-                    </td>
+                        </td>
 
-                </tr>
+                    </tr>
 
-                <tr th:if="${#lists.isEmpty(prestamos)}">
-
-                    <td colspan="7" class="text-center">
-                        No hay préstamos registrados.
-                    </td>
-
-                </tr>
+                    <tr th:if="${#lists.isEmpty(prestamos)}">
+                        <td colspan="7" class="text-center">
+                            No hay préstamos registrados.
+                        </td>
+                    </tr>
 
                 </tbody>
 

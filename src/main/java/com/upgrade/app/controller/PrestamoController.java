@@ -7,6 +7,7 @@ import com.upgrade.app.service.PrestamoService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/admin/prestamos")
@@ -44,40 +45,57 @@ public class PrestamoController {
         return "admin/prestamos";
     }
 
-    @GetMapping("/editar/{id}")
-    public String editar(@PathVariable Long id, Model model) {
+    @PostMapping("/guardar")
+    public String guardar(
+            @ModelAttribute Prestamo prestamo,
+            RedirectAttributes redirectAttributes) {
 
-        model.addAttribute(
-                "prestamo",
-                prestamoService.buscarPorId(id)
-        );
+        try {
 
-        model.addAttribute(
-                "inventarios",
-                inventarioService.listar()
-        );
+            prestamoService.guardar(prestamo);
 
-        model.addAttribute(
-                "prestamos",
-                prestamoService.listar()
-        );
+            redirectAttributes.addFlashAttribute(
+                    "mensaje",
+                    "Préstamo registrado correctamente."
+            );
 
-        return "admin/prestamos";
-    }
+        } catch (IllegalArgumentException e) {
 
-    @GetMapping("/eliminar/{id}")
-    public String eliminar(@PathVariable Long id) {
-
-        prestamoService.eliminar(id);
+            redirectAttributes.addFlashAttribute(
+                    "error",
+                    e.getMessage()
+            );
+        }
 
         return "redirect:/admin/prestamos";
     }
 
-    @PostMapping("/guardar")
-    public String guardar(
-            @ModelAttribute Prestamo prestamo) {
+    @GetMapping("/devolver/{id}")
+    public String devolver(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes) {
 
-        prestamoService.guardar(prestamo);
+        prestamoService.devolver(id);
+
+        redirectAttributes.addFlashAttribute(
+                "mensaje",
+                "Préstamo devuelto correctamente."
+        );
+
+        return "redirect:/admin/prestamos";
+    }
+
+    @GetMapping("/eliminar/{id}")
+    public String eliminar(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes) {
+
+        prestamoService.eliminar(id);
+
+        redirectAttributes.addFlashAttribute(
+                "mensaje",
+                "Préstamo eliminado correctamente."
+        );
 
         return "redirect:/admin/prestamos";
     }
