@@ -18,7 +18,8 @@ public class ServicioService {
 
     private final ServicioRepository servicioRepository;
 
-    public Page<Servicio> listar(int pagina, int tamano) {
+    public Page<Servicio> listar(String buscar, Boolean activo, int pagina, int tamano) {
+        String termino = normalizarTextoOpcional(buscar);
         int paginaSegura = Math.max(pagina, 0);
         int tamanoSeguro = Math.min(Math.max(tamano, 5), 50);
 
@@ -27,7 +28,7 @@ public class ServicioService {
                 tamanoSeguro,
                 Sort.by(Sort.Direction.ASC, "nombre")
         );
-        return servicioRepository.buscar(null, null, pageable);
+        return servicioRepository.buscar(termino, activo, pageable);
     }
 
     public Servicio obtenerPorId(Long id) {
@@ -68,6 +69,10 @@ public class ServicioService {
         servicio.setDescripcion(limpiarOpcional(form.getDescripcion()));
         servicio.setPrecioBase(form.getPrecioBase());
         servicio.setActivo(Boolean.TRUE.equals(form.getActivo()));
+    }
+
+    private String normalizarTextoOpcional(String valor) {
+        return limpiarOpcional(valor);
     }
 
     private String limpiar(String valor) {

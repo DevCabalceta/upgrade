@@ -1,6 +1,8 @@
 (function ($) {
     'use strict';
 
+    let searchTimer;
+
     function createIcons() {
         if (window.lucide) {
             window.lucide.createIcons();
@@ -103,6 +105,17 @@
                     closeModal($(this));
                 });
             }
+        });
+
+        $('#service-status-filter').on('change', function () {
+            $('#service-filter-form').trigger('submit');
+        });
+
+        $('#service-search').on('input', function () {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(function () {
+                $('#service-filter-form').trigger('submit');
+            }, 450);
         });
 
         $('#new-service-form, #edit-service-form').on('submit', function (event) {
