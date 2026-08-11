@@ -46,10 +46,10 @@ public class AdminController {
         return "admin/calendario";
     }
 
-    @GetMapping("/prestamos")
-    public String prestamos() {
-        return "admin/prestamos";
-    }
+    //@GetMapping("/prestamos")
+    //public String prestamos() {
+    //    return "admin/prestamos";
+    //}
 
     @GetMapping("/mantenimiento")
     public String mantenimiento() {
