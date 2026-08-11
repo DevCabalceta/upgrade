@@ -5,11 +5,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     
     // Busca coincidencias tanto en username como en email
     Optional<Usuario> findByUsernameOrEmail(String username, String email);
+
+    List<Usuario> findAllByActivoTrueOrderByNombreAscApellidoAsc();
     
 }

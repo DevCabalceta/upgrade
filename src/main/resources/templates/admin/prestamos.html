@@ -1,16 +1,247 @@
 <!DOCTYPE html>
-<html th:replace="~{admin/layout/admin-layout :: layout('Préstamos', 'prestamos', ~{::#page-content})}" xmlns:th="http://www.thymeleaf.org">
+<html th:replace="~{admin/layout/admin-layout :: layout('Préstamos', 'prestamos', ~{::#page-content})}"
+      xmlns:th="http://www.thymeleaf.org">
 <body>
+<div id="page-content" class="space-y-6"
+     th:attr="data-success-message=${mensajeExito},
+              data-error-message=${mensajeError},
+              data-warning-message=${mensajeAdvertencia},
+              data-mail-message=${mensajeCorreo},
+              data-open-modal=${modalAbierto}">
 
-    <div id="page-content">
-        
-        <h1 class="text-2xl font-bold mb-4">Módulo de Préstamos</h1>
-        
-        <div class="glass-card p-6 rounded-xl">
-            <p>Aquí va la tabla o el contenido del Préstamos...</p>
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight md:text-3xl">Préstamos</h1>
+            <p class="mt-1 text-sm text-muted-foreground">Control de salida y devolución de equipos.</p>
         </div>
-
+        <button id="btn-new-loan" type="button" class="btn btn-default btn-size-default">
+            <i data-lucide="plus" class="h-4 w-4"></i>Nuevo préstamo
+        </button>
     </div>
 
+    <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div class="rounded-2xl border border-border bg-card p-5">
+            <div class="text-xs text-muted-foreground">Préstamos activos</div>
+            <div class="mt-2 text-2xl font-bold text-primary" th:text="${estadisticas.activos}">0</div>
+        </div>
+        <div class="rounded-2xl border border-border bg-card p-5">
+            <div class="text-xs text-muted-foreground">Vencidos</div>
+            <div class="mt-2 text-2xl font-bold text-destructive" th:text="${estadisticas.vencidos}">0</div>
+        </div>
+        <div class="rounded-2xl border border-border bg-card p-5">
+            <div class="text-xs text-muted-foreground">Por devolver hoy</div>
+            <div class="mt-2 text-2xl font-bold text-amber-500" th:text="${estadisticas.paraHoy}">0</div>
+        </div>
+        <div class="rounded-2xl border border-border bg-card p-5">
+            <div class="text-xs text-muted-foreground">Devueltos</div>
+            <div class="mt-2 text-2xl font-bold text-emerald-500" th:text="${estadisticas.devueltos}">0</div>
+        </div>
+    </div>
+
+    <div th:if="${estadisticas.vencidos > 0}"
+         class="flex flex-col gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4 sm:flex-row sm:items-center">
+        <i data-lucide="triangle-alert" class="h-5 w-5 shrink-0 text-destructive"></i>
+        <div class="flex-1">
+            <div class="text-sm font-semibold"
+                 th:text="${estadisticas.vencidos == 1 ? 'Tienes 1 préstamo vencido' : 'Tienes ' + estadisticas.vencidos + ' préstamos vencidos'}">Préstamos vencidos</div>
+            <div class="text-xs text-muted-foreground">Contacta a los clientes y registra las devoluciones lo antes posible.</div>
+        </div>
+        <a th:href="@{/admin/prestamos(estado='VENCIDO')}" class="btn btn-outline btn-size-sm">
+            Ver vencidos <i data-lucide="arrow-right" class="h-3.5 w-3.5"></i>
+        </a>
+    </div>
+
+    <div class="overflow-hidden rounded-2xl border border-border bg-card">
+        <form id="loan-filter-form" th:action="@{/admin/prestamos}" method="get"
+              class="flex flex-col gap-3 border-b border-border p-4 lg:flex-row lg:items-center">
+            <div class="relative max-w-md flex-1">
+                <i data-lucide="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"></i>
+                <input id="loan-search" name="buscar" type="search" th:value="${buscar}"
+                       placeholder="Buscar préstamo, cliente o equipo..."
+                       class="h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+            </div>
+            <button id="btn-toggle-loan-filters" type="button" class="btn btn-outline btn-size-sm">
+                <i data-lucide="list-filter" class="h-4 w-4"></i>Filtros
+            </button>
+            <div id="loan-filter-options"
+                 th:classappend="${estadoFiltro != 'todos' or fechaFiltro != 'todos'} ? ' flex' : ' hidden'"
+                 class="flex-col gap-2 sm:flex-row">
+                <select id="loan-state-filter" name="estado"
+                        class="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                    <option value="todos" th:selected="${estadoFiltro == 'todos'}">Todos los estados</option>
+                    <option value="ACTIVO" th:selected="${estadoFiltro == 'ACTIVO'}">Activo</option>
+                    <option value="VENCIDO" th:selected="${estadoFiltro == 'VENCIDO'}">Vencido</option>
+                    <option value="DEVUELTO" th:selected="${estadoFiltro == 'DEVUELTO'}">Devuelto</option>
+                </select>
+                <select id="loan-date-filter" name="fecha"
+                        class="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+                    <option value="todos" th:selected="${fechaFiltro == 'todos'}">Cualquier fecha</option>
+                    <option value="HOY" th:selected="${fechaFiltro == 'HOY'}">Por devolver hoy</option>
+                    <option value="PENDIENTES" th:selected="${fechaFiltro == 'PENDIENTES'}">Devolución pendiente</option>
+                    <option value="DEVUELTOS" th:selected="${fechaFiltro == 'DEVUELTOS'}">Ya devueltos</option>
+                </select>
+                <a th:href="@{/admin/prestamos}" class="btn btn-ghost btn-size-sm">
+                    <i data-lucide="rotate-ccw" class="h-4 w-4"></i>Limpiar
+                </a>
+            </div>
+        </form>
+
+        <div th:if="${prestamos.hasContent()}" class="overflow-x-auto">
+            <table class="w-full min-w-[1080px] text-sm">
+                <thead class="border-b border-border bg-muted/40">
+                <tr class="text-left text-xs text-muted-foreground">
+                    <th class="px-6 py-3.5 font-semibold">Folio</th>
+                    <th class="px-4 py-3.5 font-semibold">Cliente</th>
+                    <th class="px-4 py-3.5 font-semibold">Equipo</th>
+                    <th class="px-4 py-3.5 font-semibold">Salida</th>
+                    <th class="px-4 py-3.5 font-semibold">Devolución</th>
+                    <th class="px-4 py-3.5 font-semibold">Estado</th>
+                    <th class="px-4 py-3.5 font-semibold">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="prestamo : ${prestamos.content}"
+                    class="loan-record cursor-pointer border-b border-border transition last:border-0 hover:bg-muted/40"
+                    th:attr="data-loan-id=${prestamo.id},
+                             data-loan-folio=${prestamo.folio},
+                             data-loan-client=${prestamo.cliente.nombreMostrado},
+                             data-loan-contact=${prestamo.correoContacto},
+                             data-loan-equipment=${prestamo.inventario.nombre},
+                             data-loan-equipment-code=${prestamo.inventario.codigo},
+                             data-loan-quantity=${prestamo.cantidad},
+                             data-loan-out-date=${prestamo.fechaSalida},
+                             data-loan-back-date=${prestamo.fechaDevolucionEstimada},
+                             data-loan-real-date=${prestamo.fechaDevolucionReal},
+                             data-loan-state=${prestamo.estadoMostrado},
+                             data-loan-base-state=${prestamo.estado.name()},
+                             data-loan-responsible=${prestamo.responsable.nombre + ' ' + prestamo.responsable.apellido},
+                             data-loan-out-condition=${prestamo.condicionSalida.etiqueta},
+                             data-loan-return-condition=${prestamo.condicionDevolucion != null ? prestamo.condicionDevolucion.etiqueta : ''},
+                             data-loan-notes=${prestamo.observaciones},
+                             data-loan-return-notes=${prestamo.observacionesDevolucion},
+                             data-loan-overdue=${prestamo.vencido},
+                             data-loan-delay=${prestamo.diasRetraso},
+                             data-loan-last-notification=${prestamo.ultimaNotificacionVencimiento}">
+                    <td class="whitespace-nowrap px-6 py-4 font-mono text-xs font-medium" th:text="${prestamo.folio}">PR-1001</td>
+                    <td class="px-4 py-4">
+                        <div class="min-w-40">
+                            <div class="font-medium" th:text="${prestamo.cliente.nombreMostrado}">Cliente</div>
+                            <div class="truncate text-xs text-muted-foreground" th:text="${prestamo.correoContacto}">correo</div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-4 text-muted-foreground">
+                        <div class="flex min-w-52 items-center gap-2">
+                            <i data-lucide="package" class="h-3.5 w-3.5 shrink-0"></i>
+                            <span><span th:text="${prestamo.inventario.nombre}">Equipo</span> (<span th:text="${prestamo.cantidad}">1</span>u)</span>
+                        </div>
+                    </td>
+                    <td class="whitespace-nowrap px-4 py-4 text-muted-foreground" th:text="${#temporals.format(prestamo.fechaSalida, 'dd MMM yyyy')}">Fecha</td>
+                    <td class="whitespace-nowrap px-4 py-4 text-muted-foreground"
+                        th:text="${#temporals.format(prestamo.fechaDevolucionReal != null ? prestamo.fechaDevolucionReal : prestamo.fechaDevolucionEstimada, 'dd MMM yyyy')}">Fecha</td>
+                    <td class="px-4 py-4">
+                        <span th:text="${prestamo.estadoMostrado}"
+                              th:classappend="${prestamo.vencido} ? ' border-red-500/30 bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-400' : (${prestamo.estado.name() == 'ACTIVO'} ? ' border-primary/30 bg-primary/10 text-primary' : ' border-emerald-500/30 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400')"
+                              class="inline-flex rounded-md border px-2.5 py-0.5 text-xs font-semibold">Estado</span>
+                    </td>
+                    <td class="loan-actions px-4 py-4">
+                        <div class="inline-flex items-center gap-1.5">
+                            <button type="button" data-loan-action="detail" title="Ver detalle"
+                                    class="js-loan-action flex h-8 w-8 items-center justify-center rounded-lg border border-sky-300 bg-sky-50/40 text-sky-600 transition hover:scale-105 hover:bg-sky-100 dark:border-sky-900 dark:bg-sky-950/20 dark:text-sky-400">
+                                <i data-lucide="eye" class="h-4 w-4"></i>
+                            </button>
+                            <button th:if="${prestamo.estado.name() == 'ACTIVO'}" type="button" data-loan-action="return" title="Registrar devolución"
+                                    class="js-loan-action flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-300 bg-emerald-50/40 text-emerald-600 transition hover:scale-105 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-400">
+                                <i data-lucide="rotate-ccw" class="h-4 w-4"></i>
+                            </button>
+                            <button th:if="${prestamo.vencido}" type="button" data-loan-action="notify" title="Enviar alerta por correo"
+                                    class="js-loan-action flex h-8 w-8 items-center justify-center rounded-lg border border-red-300 bg-red-50/40 text-red-600 transition hover:scale-105 hover:bg-red-100 dark:border-red-900 dark:bg-red-950/20 dark:text-red-400">
+                                <i data-lucide="send" class="h-4 w-4"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:unless="${prestamos.hasContent()}" class="px-6 py-16 text-center">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground"><i data-lucide="search-x" class="h-6 w-6"></i></div>
+            <h3 class="mt-4 font-semibold">No se encontraron préstamos</h3>
+            <p class="mt-1 text-sm text-muted-foreground">No existen registros que coincidan con los filtros.</p>
+            <a th:href="@{/admin/prestamos}" class="btn btn-outline btn-size-default mt-4">Limpiar filtros</a>
+        </div>
+
+        <div th:if="${prestamos.hasContent()}" class="flex flex-col gap-3 border-t border-border p-4 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+            <div>Mostrando <span th:text="${prestamos.number * prestamos.size + 1}">1</span>–<span th:text="${prestamos.number * prestamos.size + prestamos.numberOfElements}">10</span> de <span th:text="${prestamos.totalElements}">0</span> préstamos</div>
+            <nav th:if="${prestamos.totalPages > 1}" class="flex items-center gap-1">
+                <a th:if="${prestamos.hasPrevious()}" th:href="@{/admin/prestamos(page=${prestamos.number - 1},buscar=${buscar},estado=${estadoFiltro},fecha=${fechaFiltro})}" class="btn btn-outline btn-size-sm">Anterior</a>
+                <a th:each="numero : ${paginasVisibles}" th:href="@{/admin/prestamos(page=${numero},buscar=${buscar},estado=${estadoFiltro},fecha=${fechaFiltro})}" th:text="${numero + 1}" th:class="${numero == prestamos.number} ? 'inline-flex h-8 min-w-8 items-center justify-center rounded-md bg-primary px-2 text-xs font-semibold text-primary-foreground' : 'inline-flex h-8 min-w-8 items-center justify-center rounded-md border border-input bg-background px-2 text-xs hover:bg-accent'">1</a>
+                <a th:if="${prestamos.hasNext()}" th:href="@{/admin/prestamos(page=${prestamos.number + 1},buscar=${buscar},estado=${estadoFiltro},fecha=${fechaFiltro})}" class="btn btn-outline btn-size-sm">Siguiente</a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Nuevo préstamo -->
+    <div id="modal-new-loan" class="loan-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div class="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-primary"><i data-lucide="hand-coins" class="h-5 w-5"></i></div><div class="pr-8"><h2 class="text-lg font-semibold">Nuevo préstamo de equipo</h2><p class="mt-1 text-sm text-muted-foreground">Registra una salida temporal a un cliente.</p></div><button type="button" class="js-loan-close-modal absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+            <form id="new-loan-form" th:action="@{/admin/prestamos}" th:object="${nuevoPrestamo}" method="post" class="flex min-h-0 flex-1 flex-col" novalidate>
+                <input type="hidden" name="buscarFiltro" th:value="${buscar}"><input type="hidden" name="estadoFiltro" th:value="${estadoFiltro}"><input type="hidden" name="fechaFiltro" th:value="${fechaFiltro}"><input type="hidden" name="pageFiltro" th:value="${prestamos.number}">
+                <div class="flex-1 overflow-y-auto px-6 py-5">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="space-y-1.5"><label class="text-xs font-semibold">Equipo <span class="text-destructive">*</span></label><select id="new-loan-equipment" th:field="*{inventarioId}" required class="loan-form-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">Seleccionar equipo...</option><option th:each="equipo : ${equiposPrestamo}" th:value="${equipo.id}" th:text="${equipo.codigo + ' · ' + equipo.nombre + ' (' + equipo.cantidadDisponible + ' disponibles)'}" th:attr="data-stock=${equipo.cantidadDisponible}">Equipo</option></select><p th:errors="*{inventarioId}" class="text-xs text-destructive"></p><p id="new-loan-stock-help" class="text-xs text-muted-foreground"></p></div>
+                        <div class="space-y-1.5"><label class="text-xs font-semibold">Cantidad <span class="text-destructive">*</span></label><input id="new-loan-quantity" th:field="*{cantidad}" type="number" min="1" required class="loan-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"><p th:errors="*{cantidad}" class="text-xs text-destructive"></p></div>
+                        <div class="space-y-1.5"><label class="text-xs font-semibold">Cliente <span class="text-destructive">*</span></label><select id="new-loan-client" th:field="*{clienteId}" required class="loan-form-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">Seleccionar cliente...</option><option th:each="cliente : ${clientesPrestamo}" th:value="${cliente.id}" th:text="${cliente.nombreMostrado}" th:attr="data-email=${cliente.correo}">Cliente</option></select><p th:errors="*{clienteId}" class="text-xs text-destructive"></p></div>
+                        <div class="space-y-1.5"><label class="text-xs font-semibold">Correo de contacto</label><input id="new-loan-contact" th:field="*{correoContacto}" type="email" maxlength="120" placeholder="Se completará desde el cliente" class="loan-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"><p th:errors="*{correoContacto}" class="text-xs text-destructive"></p></div>
+                        <div class="space-y-1.5"><label class="text-xs font-semibold">Responsable interno <span class="text-destructive">*</span></label><select th:field="*{responsableId}" required class="loan-form-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">Seleccionar responsable...</option><option th:each="responsable : ${responsablesPrestamo}" th:value="${responsable.id}" th:text="${responsable.nombre + ' ' + responsable.apellido}">Responsable</option></select><p th:errors="*{responsableId}" class="text-xs text-destructive"></p></div>
+                        <div class="space-y-1.5"><label class="text-xs font-semibold">Estado al salir <span class="text-destructive">*</span></label><select th:field="*{condicionSalida}" required class="loan-form-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option th:each="condicion : ${condicionesSalida}" th:value="${condicion}" th:text="${condicion.etiqueta}">Óptimo</option></select><p th:errors="*{condicionSalida}" class="text-xs text-destructive"></p></div>
+                        <div class="space-y-1.5"><label class="text-xs font-semibold">Fecha de salida <span class="text-destructive">*</span></label><input th:field="*{fechaSalida}" type="date" required class="loan-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"><p th:errors="*{fechaSalida}" class="text-xs text-destructive"></p></div>
+                        <div class="space-y-1.5"><label class="text-xs font-semibold">Devolución estimada <span class="text-destructive">*</span></label><input th:field="*{fechaDevolucionEstimada}" type="date" required class="loan-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"><p th:errors="*{fechaDevolucionEstimada}" class="text-xs text-destructive"></p></div>
+                        <div class="space-y-1.5 sm:col-span-2"><label class="text-xs font-semibold">Condiciones y observaciones</label><textarea th:field="*{observaciones}" maxlength="2000" rows="3" placeholder="Accesorios incluidos, estado físico y condiciones..." class="loan-form-control w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"></textarea><p th:errors="*{observaciones}" class="text-xs text-destructive"></p></div>
+                    </div>
+                    <div th:if="${#fields.hasGlobalErrors()}" class="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"><p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p></div>
+                    <div class="mt-4 flex gap-2 rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs text-muted-foreground"><i data-lucide="mail" class="h-4 w-4 shrink-0 text-primary"></i><span>Al registrar, se enviará una notificación a <strong class="text-foreground" th:text="${destinatarioCorreo}">correo</strong>.</span></div>
+                </div>
+                <div class="flex justify-between border-t border-border bg-muted/30 px-6 py-4"><button type="button" class="js-loan-close-modal btn btn-ghost btn-size-default">Cancelar</button><button type="submit" class="btn btn-default btn-size-default font-semibold"><i data-lucide="hand-coins" class="h-4 w-4"></i>Registrar préstamo</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Detalle -->
+    <div id="modal-loan-detail" class="loan-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div class="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-primary"><i data-lucide="eye" class="h-5 w-5"></i></div><div><h2 id="loan-detail-title" class="text-lg font-semibold">Detalle del préstamo</h2><p class="mt-1 text-sm text-muted-foreground">Información de la salida y devolución.</p></div><button type="button" class="js-loan-close-modal absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+            <div class="flex-1 space-y-4 overflow-y-auto px-6 py-5"><div class="flex items-center gap-2"><span id="loan-detail-state" class="rounded-md border px-2.5 py-0.5 text-xs font-semibold">Estado</span><span id="loan-detail-deadline" class="text-sm text-muted-foreground"></span></div><div class="grid gap-3 sm:grid-cols-2"><div th:each="campo : ${#strings.arraySplit('Equipo,Cantidad,Cliente,Responsable,Fecha salida,Devolución estimada,Condición salida,Condición devolución,Contacto,Última notificación', ',')}" class="rounded-lg border border-border p-3"><div class="text-[11px] uppercase tracking-wider text-muted-foreground" th:text="${campo}">Campo</div><div th:id="${'loan-detail-' + #strings.toLowerCase(#strings.replace(campo, ' ', '-'))}" class="mt-0.5 text-sm font-medium">—</div></div></div><div class="rounded-lg border border-border bg-muted/20 p-3"><div class="text-[11px] uppercase tracking-wider text-muted-foreground">Observaciones</div><div id="loan-detail-notes" class="mt-1 text-sm">—</div></div></div>
+            <div class="flex justify-end border-t border-border bg-muted/30 px-6 py-4"><button type="button" class="js-loan-close-modal btn btn-outline btn-size-default">Cerrar</button></div>
+        </div>
+    </div>
+
+    <!-- Devolución -->
+    <div id="modal-loan-return" class="loan-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div class="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-500"><i data-lucide="rotate-ccw" class="h-5 w-5"></i></div><div><h2 class="text-lg font-semibold">Registrar devolución</h2><p class="mt-1 text-sm text-muted-foreground">Confirma el retorno del equipo y su estado.</p></div><button type="button" class="js-loan-close-modal absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+            <form id="loan-return-form" th:action="@{/admin/prestamos/devolver}" th:object="${devolucionPrestamo}" method="post" novalidate>
+                <input id="return-loan-id" type="hidden" th:field="*{id}"><input type="hidden" name="buscarFiltro" th:value="${buscar}"><input type="hidden" name="estadoFiltro" th:value="${estadoFiltro}"><input type="hidden" name="fechaFiltro" th:value="${fechaFiltro}"><input type="hidden" name="pageFiltro" th:value="${prestamos.number}">
+                <div class="space-y-4 px-6 py-5"><div class="rounded-lg border border-border bg-muted/30 p-3"><div id="return-loan-folio" class="text-xs font-semibold text-primary">Folio</div><div id="return-loan-summary" class="mt-1 text-sm font-medium">Equipo</div></div><div class="grid gap-4 sm:grid-cols-2"><div class="space-y-1.5"><label class="text-xs font-semibold">Fecha devolución <span class="text-destructive">*</span></label><input id="return-loan-date" th:field="*{fechaDevolucion}" type="date" required class="loan-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"><p th:errors="*{fechaDevolucion}" class="text-xs text-destructive"></p></div><div class="space-y-1.5"><label class="text-xs font-semibold">Estado al regresar <span class="text-destructive">*</span></label><select th:field="*{condicionDevolucion}" required class="loan-form-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option th:each="condicion : ${condicionesDevolucion}" th:value="${condicion}" th:text="${condicion.etiqueta}">Óptimo</option></select><p th:errors="*{condicionDevolucion}" class="text-xs text-destructive"></p></div></div><div class="space-y-1.5"><label class="text-xs font-semibold">Observaciones</label><textarea th:field="*{observaciones}" rows="3" maxlength="2000" placeholder="Daños o accesorios faltantes..." class="loan-form-control w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"></textarea></div><div th:if="${#fields.hasGlobalErrors()}" class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"><p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p></div></div>
+                <div class="flex justify-between border-t border-border bg-muted/30 px-6 py-4"><button type="button" class="js-loan-close-modal btn btn-ghost btn-size-default">Cancelar</button><button type="submit" class="btn h-9 bg-emerald-500 px-4 text-white hover:bg-emerald-600"><i data-lucide="check-check" class="h-4 w-4"></i>Registrar devolución</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notificación vencimiento -->
+    <div id="modal-loan-notify" class="loan-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div class="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 items-center justify-center rounded-xl bg-destructive/15 text-destructive"><i data-lucide="triangle-alert" class="h-5 w-5"></i></div><div><h2 id="notify-loan-title" class="text-lg font-semibold">Préstamo vencido</h2><p class="mt-1 text-sm text-muted-foreground">Envía un recordatorio de devolución.</p></div><button type="button" class="js-loan-close-modal absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+            <form id="loan-notify-form" th:action="@{/admin/prestamos/notificar}" th:object="${notificacionPrestamo}" method="post" novalidate>
+                <input id="notify-loan-id" type="hidden" th:field="*{id}"><input type="hidden" name="buscarFiltro" th:value="${buscar}"><input type="hidden" name="estadoFiltro" th:value="${estadoFiltro}"><input type="hidden" name="fechaFiltro" th:value="${fechaFiltro}"><input type="hidden" name="pageFiltro" th:value="${prestamos.number}">
+                <div class="space-y-4 px-6 py-5"><div id="notify-loan-summary" class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm">Préstamo</div><div class="space-y-1.5"><label class="text-xs font-semibold">Mensaje del recordatorio <span class="text-destructive">*</span></label><textarea th:field="*{mensaje}" required maxlength="1000" rows="4" class="loan-form-control w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"></textarea><p th:errors="*{mensaje}" class="text-xs text-destructive"></p></div><div class="flex gap-2 rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs text-muted-foreground"><i data-lucide="mail" class="h-4 w-4 shrink-0 text-primary"></i><span>El mensaje llegará temporalmente a <strong class="text-foreground" th:text="${destinatarioCorreo}">correo</strong>.</span></div><div th:if="${#fields.hasGlobalErrors()}" class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"><p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p></div></div>
+                <div class="flex justify-between border-t border-border bg-muted/30 px-6 py-4"><button type="button" class="js-loan-close-modal btn btn-ghost btn-size-default">Más tarde</button><button type="submit" class="btn btn-destructive btn-size-default font-semibold"><i data-lucide="send" class="h-4 w-4"></i>Enviar alerta</button></div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script th:src="@{/dist/js/prestamos.js}"></script>
+</div>
 </body>
 </html>
