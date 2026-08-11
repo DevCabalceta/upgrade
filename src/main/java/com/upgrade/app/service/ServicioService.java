@@ -1,6 +1,7 @@
 package com.upgrade.app.service;
 
 import com.upgrade.app.domain.Servicio;
+import com.upgrade.app.dto.ServicioForm;
 import com.upgrade.app.exception.ServicioNoEncontradoException;
 import com.upgrade.app.repository.ServicioRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,5 +33,35 @@ public class ServicioService {
     public Servicio obtenerPorId(Long id) {
         return servicioRepository.findById(id)
                 .orElseThrow(() -> new ServicioNoEncontradoException(id));
+    }
+
+    public boolean nombreOcupado(String nombre, Long idActual) {
+        String normalizado = limpiar(nombre);
+        return idActual == null
+                ? servicioRepository.existsByNombreIgnoreCase(normalizado)
+                : servicioRepository.existsByNombreIgnoreCaseAndIdNot(normalizado, idActual);
+    }
+
+    @Transactional
+    public Servicio crear(ServicioForm form) {
+        Servicio servicio = new Servicio();
+        copiarFormulario(form, servicio);
+        return servicioRepository.save(servicio);
+    }
+
+    private void copiarFormulario(ServicioForm form, Servicio servicio) {
+        servicio.setNombre(limpiar(form.getNombre()));
+        servicio.setDescripcion(limpiarOpcional(form.getDescripcion()));
+        servicio.setPrecioBase(form.getPrecioBase());
+        servicio.setActivo(Boolean.TRUE.equals(form.getActivo()));
+    }
+
+    private String limpiar(String valor) {
+        return valor == null ? "" : valor.trim();
+    }
+
+    private String limpiarOpcional(String valor) {
+        String limpio = limpiar(valor);
+        return limpio.isEmpty() ? null : limpio;
     }
 }

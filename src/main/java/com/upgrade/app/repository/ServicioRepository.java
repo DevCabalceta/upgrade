@@ -26,4 +26,8 @@ public interface ServicioRepository extends JpaRepository<Servicio, Long> {
             @Param("activo") Boolean activo,
             Pageable pageable
     );
+
+    boolean existsByNombreIgnoreCase(String nombre);
+
+    boolean existsByNombreIgnoreCaseAndIdNot(String nombre, Long id);
 }
