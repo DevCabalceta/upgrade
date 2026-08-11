@@ -35,16 +35,6 @@ public class AdminController {
         return "admin/calendario";
     }
 
-    @GetMapping("/mantenimiento")
-    public String mantenimiento() {
-        return "admin/mantenimiento";
-    }
-
-    @GetMapping("/colaboradores")
-    public String colaboradores() {
-        return "admin/colaboradores";
-    }
-
     @GetMapping("/roles")
     public String roles() {
         return "admin/roles";

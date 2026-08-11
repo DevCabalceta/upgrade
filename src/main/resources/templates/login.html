@@ -252,7 +252,7 @@
                     <span>Usuario o contraseña incorrectos o cuenta inactiva.</span>
                 </div>
                 
-                <div th:if="${param.logout}" class="mt-8 p-3 text-sm text-success bg-success/10 border border-success/30 rounded-md flex items-center gap-2">
+                <div th:if="${param.logout != null}" class="mt-8 p-3 text-sm text-success bg-success/10 border border-success/30 rounded-md flex items-center gap-2">
                     <i data-lucide="check-circle-2" class="h-4 w-4 shrink-0"></i>
                     <span>Has cerrado sesión correctamente.</span>
                 </div>

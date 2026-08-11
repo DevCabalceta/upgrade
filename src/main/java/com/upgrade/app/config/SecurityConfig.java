@@ -17,18 +17,27 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(auth -> auth
                 // Rutas públicas: página de inicio, login y todos los recursos estáticos
-                .requestMatchers("/", "/login", "/assets/**", "/dist/**", "/uploads/**").permitAll()
+                .requestMatchers("/", "/login", "/assets/**", "/dist/**", "/uploads/gallery/**").permitAll()
+                // Las evidencias técnicas no deben ser públicas.
+                .requestMatchers("/uploads/maintenance/**").authenticated()
                 // Cualquier ruta que empiece con /admin requiere haber iniciado sesión
                 .requestMatchers("/admin/**").authenticated()
                 .anyRequest().authenticated()
             )
             .formLogin(login -> login
-                .loginPage("/login") // Indica dónde está tu HTML de login
-                .defaultSuccessUrl("/admin/dashboard", true) // A dónde ir al entrar con éxito
+                .loginPage("/login")
+                .usernameParameter("username")
+                .passwordParameter("password")
+                .defaultSuccessUrl("/admin/dashboard", true)
+                .failureUrl("/login?error")
                 .permitAll()
             )
             .logout(logout -> logout
-                .logoutSuccessUrl("/login?logout") // A dónde ir al cerrar sesión
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/login")
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
+                .deleteCookies("JSESSIONID")
                 .permitAll()
             );
 

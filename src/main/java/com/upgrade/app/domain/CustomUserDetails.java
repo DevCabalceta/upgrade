@@ -8,14 +8,16 @@ public class CustomUserDetails extends User {
     
     private String nombre;
     private String apellido;
+    private String rolNombre;
 
     // Constructor
     public CustomUserDetails(String username, String password, boolean enabled,
                              Collection<? extends GrantedAuthority> authorities,
-                             String nombre, String apellido) {
+                             String nombre, String apellido, String rolNombre) {
         super(username, password, enabled, true, true, true, authorities);
         this.nombre = nombre;
         this.apellido = apellido;
+        this.rolNombre = rolNombre;
     }
 
     // Método para obtener el nombre completo
@@ -28,5 +30,9 @@ public class CustomUserDetails extends User {
         String inicialNombre = (nombre != null && !nombre.isEmpty()) ? nombre.substring(0, 1) : "";
         String inicialApellido = (apellido != null && !apellido.isEmpty()) ? apellido.substring(0, 1) : "";
         return (inicialNombre + inicialApellido).toUpperCase();
+    }
+
+    public String getRolNombre() {
+        return rolNombre;
     }
 }

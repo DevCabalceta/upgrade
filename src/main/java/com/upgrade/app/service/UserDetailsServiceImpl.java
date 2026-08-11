@@ -3,18 +3,18 @@ package com.upgrade.app.service;
 import com.upgrade.app.domain.Usuario;
 import com.upgrade.app.repository.UsuarioRepository;
 import com.upgrade.app.domain.CustomUserDetails; 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
 import org.springframework.security.authentication.DisabledException;
-import java.util.Collections;
+import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
 
     @Override
     public UserDetails loadUserByUsername(String login) throws UsernameNotFoundException {
@@ -25,14 +25,21 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             throw new DisabledException("La cuenta está inactiva");
         }
 
-        // Devolvemos nuestra clase personalizada con el nombre y apellido
+        List<SimpleGrantedAuthority> authorities = usuario.getRoles().isEmpty()
+                ? List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                : usuario.getRoles().stream()
+                .filter(rol -> Boolean.TRUE.equals(rol.getActivo()))
+                .map(rol -> new SimpleGrantedAuthority("ROLE_" + rol.getNombre()))
+                .toList();
+
         return new CustomUserDetails(
                 usuario.getUsername(),
                 usuario.getPassword(),
                 usuario.getActivo(),
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")),
+                authorities,
                 usuario.getNombre(),
-                usuario.getApellido()
+                usuario.getApellido(),
+                usuario.getRolPrincipalNombre()
         );
     }
 }

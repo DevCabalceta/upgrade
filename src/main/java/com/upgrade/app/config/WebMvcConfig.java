@@ -11,9 +11,14 @@ import java.nio.file.Path;
 public class WebMvcConfig implements WebMvcConfigurer {
 
     private final Path directorioGaleria;
+    private final Path directorioMantenimiento;
 
-    public WebMvcConfig(@Value("${app.upload.gallery-dir:uploads/gallery}") String directorioGaleria) {
+    public WebMvcConfig(
+            @Value("${app.upload.gallery-dir:uploads/gallery}") String directorioGaleria,
+            @Value("${app.upload.maintenance-dir:uploads/maintenance}") String directorioMantenimiento
+    ) {
         this.directorioGaleria = Path.of(directorioGaleria).toAbsolutePath().normalize();
+        this.directorioMantenimiento = Path.of(directorioMantenimiento).toAbsolutePath().normalize();
     }
 
     @Override
@@ -24,5 +29,12 @@ public class WebMvcConfig implements WebMvcConfigurer {
         }
         registry.addResourceHandler("/uploads/gallery/**")
                 .addResourceLocations(ubicacion);
+
+        String ubicacionMantenimiento = directorioMantenimiento.toUri().toString();
+        if (!ubicacionMantenimiento.endsWith("/")) {
+            ubicacionMantenimiento += "/";
+        }
+        registry.addResourceHandler("/uploads/maintenance/**")
+                .addResourceLocations(ubicacionMantenimiento);
     }
 }

@@ -55,7 +55,7 @@
                         </div>
                         <div class="hidden xl:block text-left">
                             <div class="text-xs font-semibold leading-none" sec:authentication="principal.nombreCompleto">Gabriel Cabalceta</div>
-                            <div class="text-[10px] text-muted-foreground leading-none mt-1">Administrador</div>
+                            <div class="text-[10px] text-muted-foreground leading-none mt-1" sec:authentication="principal.rolNombre">Administrador</div>
                         </div>
                     </button>
 
@@ -65,7 +65,13 @@
                         <a href="#" class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground">Perfil</a>
                         <a href="#" class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground">Configuración</a>
                         <div class="-mx-1 my-1 h-px bg-muted"></div>
-                        <a th:href="@{/login}" class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground">Cerrar sesión</a>
+                        <form th:action="@{/logout}" method="post" class="m-0">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button type="submit" class="relative flex w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm outline-none hover:bg-destructive/10 hover:text-destructive">
+                                <i data-lucide="log-out" class="h-4 w-4"></i>
+                                Cerrar sesión
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>

@@ -1,16 +1,245 @@
 <!DOCTYPE html>
-<html th:replace="~{admin/layout/admin-layout :: layout('Mantenimiento', 'mantenimiento', ~{::#page-content})}" xmlns:th="http://www.thymeleaf.org">
+<html th:replace="~{admin/layout/admin-layout :: layout('Mantenimiento', 'mantenimiento', ~{::#page-content})}"
+      xmlns:th="http://www.thymeleaf.org">
 <body>
+<div id="page-content" class="space-y-6"
+     th:attr="data-success-message=${mensajeExito},
+              data-error-message=${mensajeError},
+              data-open-modal=${modalAbierto},
+              data-order-modal-id=${ordenModalId},
+              data-open-detail-id=${abrirDetalleId}">
 
-    <div id="page-content">
-        
-        <h1 class="text-2xl font-bold mb-4">Módulo de Mantenimiento</h1>
-        
-        <div class="glass-card p-6 rounded-xl">
-            <p>Aquí va la tabla o el contenido del Mantenimiento...</p>
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight md:text-3xl">Mantenimiento</h1>
+            <p class="mt-1 text-sm text-muted-foreground">Órdenes preventivas, correctivas y de emergencia para equipos.</p>
         </div>
-
+        <button id="btn-new-maintenance" type="button" class="btn btn-default btn-size-default">
+            <i data-lucide="plus" class="h-4 w-4"></i>Nueva orden
+        </button>
     </div>
 
+    <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div class="rounded-2xl border border-border bg-card p-5">
+            <div class="flex items-start justify-between"><div class="text-xs font-medium text-muted-foreground">En mantenimiento</div><div class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500"><i data-lucide="wrench" class="h-4 w-4"></i></div></div>
+            <div class="mt-3 text-2xl font-bold" th:text="${estadisticas.enProceso}">0</div>
+        </div>
+        <div class="rounded-2xl border border-border bg-card p-5">
+            <div class="flex items-start justify-between"><div class="text-xs font-medium text-muted-foreground">Programados este mes</div><div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><i data-lucide="clock-3" class="h-4 w-4"></i></div></div>
+            <div class="mt-3 text-2xl font-bold" th:text="${estadisticas.programadasMes}">0</div>
+        </div>
+        <div class="rounded-2xl border border-border bg-card p-5">
+            <div class="flex items-start justify-between"><div class="text-xs font-medium text-muted-foreground">Vencidos</div><div class="flex h-8 w-8 items-center justify-center rounded-lg bg-destructive/10 text-destructive"><i data-lucide="triangle-alert" class="h-4 w-4"></i></div></div>
+            <div class="mt-3 text-2xl font-bold text-destructive" th:text="${estadisticas.vencidas}">0</div>
+        </div>
+        <div class="rounded-2xl border border-border bg-card p-5">
+            <div class="flex items-start justify-between"><div class="text-xs font-medium text-muted-foreground">Costo mensual</div><div class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500"><i data-lucide="dollar-sign" class="h-4 w-4"></i></div></div>
+            <div class="mt-3 text-2xl font-bold" th:text="${'$' + #numbers.formatDecimal(estadisticas.costoMensual, 1, 'COMMA', 2, 'POINT')}">$0.00</div>
+        </div>
+    </div>
+
+    <div class="overflow-hidden rounded-2xl border border-border bg-card">
+        <form id="maintenance-filter-form" th:action="@{/admin/mantenimiento}" method="get"
+              class="flex flex-col gap-3 border-b border-border p-4 lg:flex-row lg:items-center">
+            <div class="relative max-w-md flex-1">
+                <i data-lucide="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"></i>
+                <input id="maintenance-search" name="buscar" type="search" th:value="${buscar}"
+                       placeholder="Buscar orden, equipo, cliente o técnico..."
+                       class="h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+            </div>
+            <button id="btn-toggle-maintenance-filters" type="button" class="btn btn-outline btn-size-sm lg:ml-auto">
+                <i data-lucide="list-filter" class="h-4 w-4"></i>Filtros
+            </button>
+            <div id="maintenance-filter-options"
+                 th:classappend="${(tipoFiltro != 'todos' or estadoFiltro != 'todos' or prioridadFiltro != 'todos') ? ' flex' : ' hidden'}"
+                 class="flex-col gap-2 sm:flex-row">
+                <select id="maintenance-type-filter" name="tipo" class="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="todos">Todos los tipos</option>
+                    <option th:each="tipo : ${tiposMantenimiento}" th:value="${tipo.name()}" th:text="${tipo.etiqueta}" th:selected="${tipoFiltro == tipo.name()}">Tipo</option>
+                </select>
+                <select id="maintenance-state-filter" name="estado" class="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="todos">Todos los estados</option>
+                    <option th:each="estado : ${todosEstadosMantenimiento}" th:value="${estado.name()}" th:text="${estado.etiqueta}" th:selected="${estadoFiltro == estado.name()}">Estado</option>
+                </select>
+                <select id="maintenance-priority-filter" name="prioridad" class="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="todos">Todas las prioridades</option>
+                    <option th:each="prioridad : ${prioridadesMantenimiento}" th:value="${prioridad.name()}" th:text="${prioridad.etiqueta}" th:selected="${prioridadFiltro == prioridad.name()}">Prioridad</option>
+                </select>
+                <a th:href="@{/admin/mantenimiento}" class="btn btn-ghost btn-size-sm"><i data-lucide="rotate-ccw" class="h-4 w-4"></i>Limpiar</a>
+            </div>
+        </form>
+
+        <div th:if="${ordenes.hasContent()}" class="overflow-x-auto">
+            <table class="w-full min-w-[1320px] text-sm">
+                <thead class="border-b border-border bg-muted/40">
+                <tr class="text-left text-xs text-muted-foreground">
+                    <th class="px-6 py-3.5 font-semibold">Orden</th><th class="px-4 py-3.5 font-semibold">Equipo</th>
+                    <th class="px-4 py-3.5 font-semibold">Tipo</th><th class="px-4 py-3.5 font-semibold">Técnico</th>
+                    <th class="px-4 py-3.5 font-semibold">Estado</th><th class="px-4 py-3.5 font-semibold">Prioridad</th>
+                    <th class="px-4 py-3.5 font-semibold">Inicio</th><th class="px-4 py-3.5 text-right font-semibold">Costo</th>
+                    <th class="px-4 py-3.5 font-semibold">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="orden : ${ordenes.content}"
+                    class="maintenance-record cursor-pointer border-b border-border transition last:border-0 hover:bg-muted/40"
+                    th:attr="data-order-id=${orden.id},
+                             data-order-number=${orden.numero},
+                             data-equipment-id=${orden.inventario.id},
+                             data-client-id=${orden.cliente != null ? orden.cliente.id : ''},
+                             data-technician-id=${orden.tecnico != null ? orden.tecnico.id : ''},
+                             data-type=${orden.tipo.name()},
+                             data-priority=${orden.prioridad.name()},
+                             data-state=${orden.estado.name()},
+                             data-location=${orden.ubicacion},
+                             data-date=${orden.fechaProgramada},
+                             data-time=${orden.horaProgramada},
+                             data-cost=${orden.costoEstimado},
+                             data-duration=${orden.duracionEstimada},
+                             data-description=${orden.descripcion}">
+                    <td class="whitespace-nowrap px-6 py-4 font-mono text-xs font-medium" th:text="${orden.numero}">MNT-1001</td>
+                    <td class="px-4 py-4"><div class="min-w-52"><div class="font-medium" th:text="${orden.inventario.nombre}">Equipo</div><div class="mt-0.5 text-xs text-muted-foreground" th:text="${orden.inventario.codigo}">SKU</div></div></td>
+                    <td class="px-4 py-4 text-muted-foreground" th:text="${orden.tipo.etiqueta}">Preventivo</td>
+                    <td class="px-4 py-4"><div class="flex min-w-40 items-center gap-2"><i data-lucide="user" class="h-3.5 w-3.5 text-muted-foreground"></i><span th:text="${orden.tecnico != null ? orden.tecnico.nombre + ' ' + orden.tecnico.apellido : 'Sin asignar'}">Técnico</span></div></td>
+                    <td class="px-4 py-4"><span th:text="${orden.vencida ? 'Vencido' : orden.estado.etiqueta}"
+                        th:classappend="${orden.vencida
+                            ? ' border-red-500/30 bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-400'
+                            : (orden.estado.name() == 'EN_PROCESO'
+                                ? ' border-amber-500/30 bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400'
+                                : (orden.estado.name() == 'FINALIZADO'
+                                    ? ' border-emerald-500/30 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
+                                    : (orden.estado.name() == 'CANCELADO'
+                                        ? ' border-red-500/30 bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-400'
+                                        : ' border-border bg-muted text-muted-foreground')))}"
+                        class="inline-flex rounded-md border px-2.5 py-0.5 text-xs font-semibold">Estado</span></td>
+                    <td class="px-4 py-4"><span th:text="${orden.prioridad.etiqueta}"
+                        th:classappend="${orden.prioridad.name() == 'CRITICA'
+                            ? ' bg-destructive text-destructive-foreground'
+                            : (orden.prioridad.name() == 'ALTA'
+                                ? ' bg-amber-500 text-amber-950'
+                                : (orden.prioridad.name() == 'MEDIA'
+                                    ? ' bg-primary/15 text-primary'
+                                    : ' bg-muted text-muted-foreground'))}"
+                        class="inline-flex rounded-md px-2.5 py-0.5 text-xs font-semibold">Prioridad</span></td>
+                    <td class="whitespace-nowrap px-4 py-4 text-muted-foreground"><span th:text="${#temporals.format(orden.fechaProgramada, 'dd MMM yyyy')}">Fecha</span><div class="text-xs" th:text="${#temporals.format(orden.horaProgramada, 'HH:mm')}">Hora</div></td>
+                    <td class="whitespace-nowrap px-4 py-4 text-right font-semibold" th:text="${'$' + #numbers.formatDecimal(orden.costoEstimado, 1, 'COMMA', 2, 'POINT')}">$0</td>
+                    <td class="maintenance-actions px-4 py-4"><div class="inline-flex items-center gap-1.5">
+                        <button type="button" data-maintenance-action="detail" title="Ver detalle" class="js-maintenance-action flex h-8 w-8 items-center justify-center rounded-lg border border-sky-300 bg-sky-50/40 text-sky-600 transition hover:scale-105 hover:bg-sky-100 dark:border-sky-900 dark:bg-sky-950/20 dark:text-sky-400"><i data-lucide="eye" class="h-4 w-4"></i></button>
+                        <button th:if="${!orden.estado.estaCerrado()}" type="button" data-maintenance-action="edit" title="Editar" class="js-maintenance-action flex h-8 w-8 items-center justify-center rounded-lg border border-amber-300 bg-amber-50/40 text-amber-600 transition hover:scale-105 hover:bg-amber-100 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-400"><i data-lucide="pencil" class="h-4 w-4"></i></button>
+                        <button th:if="${!orden.estado.estaCerrado()}" type="button" data-maintenance-action="technician" title="Asignar técnico" class="js-maintenance-action flex h-8 w-8 items-center justify-center rounded-lg border border-indigo-300 bg-indigo-50/40 text-indigo-600 transition hover:scale-105 hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/20 dark:text-indigo-400"><i data-lucide="user-check" class="h-4 w-4"></i></button>
+                        <button type="button" data-maintenance-action="observation" title="Añadir observación" class="js-maintenance-action flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-300 bg-cyan-50/40 text-cyan-600 transition hover:scale-105 hover:bg-cyan-100 dark:border-cyan-900 dark:bg-cyan-950/20 dark:text-cyan-400"><i data-lucide="message-square-plus" class="h-4 w-4"></i></button>
+                        <button type="button" data-maintenance-action="evidence" title="Subir evidencia" class="js-maintenance-action flex h-8 w-8 items-center justify-center rounded-lg border border-blue-300 bg-blue-50/40 text-blue-600 transition hover:scale-105 hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/20 dark:text-blue-400"><i data-lucide="upload-cloud" class="h-4 w-4"></i></button>
+                        <button th:if="${!orden.estado.estaCerrado()}" type="button" data-maintenance-action="close" title="Cerrar orden" class="js-maintenance-action flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-300 bg-emerald-50/40 text-emerald-600 transition hover:scale-105 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-400"><i data-lucide="circle-check-big" class="h-4 w-4"></i></button>
+                        <button type="button" data-maintenance-action="delete" title="Eliminar" class="js-maintenance-action flex h-8 w-8 items-center justify-center rounded-lg border border-red-300 bg-red-50/40 text-red-600 transition hover:scale-105 hover:bg-red-100 dark:border-red-900 dark:bg-red-950/20 dark:text-red-400"><i data-lucide="trash-2" class="h-4 w-4"></i></button>
+                    </div></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:unless="${ordenes.hasContent()}" class="px-6 py-16 text-center"><div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground"><i data-lucide="search-x" class="h-6 w-6"></i></div><h3 class="mt-4 font-semibold">No se encontraron órdenes</h3><p class="mt-1 text-sm text-muted-foreground">Prueba con otros filtros o registra una orden nueva.</p></div>
+
+        <div th:if="${ordenes.hasContent()}" class="flex flex-col gap-3 border-t border-border p-4 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+            <div>Mostrando <span th:text="${ordenes.number * ordenes.size + 1}">1</span>–<span th:text="${ordenes.number * ordenes.size + ordenes.numberOfElements}">10</span> de <span th:text="${ordenes.totalElements}">0</span> órdenes</div>
+            <nav th:if="${ordenes.totalPages > 1}" class="flex items-center gap-1">
+                <a th:if="${ordenes.hasPrevious()}" th:href="@{/admin/mantenimiento(page=${ordenes.number - 1},buscar=${buscar},tipo=${tipoFiltro},estado=${estadoFiltro},prioridad=${prioridadFiltro})}" class="btn btn-outline btn-size-sm">Anterior</a>
+                <a th:each="numero : ${paginasVisibles}" th:href="@{/admin/mantenimiento(page=${numero},buscar=${buscar},tipo=${tipoFiltro},estado=${estadoFiltro},prioridad=${prioridadFiltro})}" th:text="${numero + 1}" th:class="${numero == ordenes.number ? 'inline-flex h-8 min-w-8 items-center justify-center rounded-md bg-primary px-2 text-xs font-semibold text-primary-foreground' : 'inline-flex h-8 min-w-8 items-center justify-center rounded-md border border-input bg-background px-2 text-xs hover:bg-accent'}">1</a>
+                <a th:if="${ordenes.hasNext()}" th:href="@{/admin/mantenimiento(page=${ordenes.number + 1},buscar=${buscar},tipo=${tipoFiltro},estado=${estadoFiltro},prioridad=${prioridadFiltro})}" class="btn btn-outline btn-size-sm">Siguiente</a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Contenido de detalle prerenderizado para conservar MVC sin API REST. -->
+    <template th:each="orden : ${ordenes.content}" th:id="${'maintenance-detail-template-' + orden.id}">
+        <div class="grid gap-5 md:grid-cols-3" th:with="detalle=${detallesOrdenes[orden.id]}">
+            <div class="space-y-4 md:col-span-2">
+                <div class="flex flex-wrap items-center gap-2"><span class="rounded-md border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary" th:text="${orden.estado.etiqueta}">Estado</span><span class="rounded-md bg-muted px-2.5 py-0.5 text-xs font-semibold" th:text="${orden.prioridad.etiqueta}">Prioridad</span><span class="ml-auto text-xs text-muted-foreground" th:text="${#temporals.format(orden.fechaProgramada, 'dd MMM yyyy') + ' · ' + #temporals.format(orden.horaProgramada, 'HH:mm')}">Fecha</span></div>
+                <div class="rounded-xl border border-border p-4"><div class="text-xs uppercase tracking-wider text-muted-foreground">Descripción</div><p class="mt-2 text-sm leading-relaxed" th:text="${orden.descripcion}">Descripción</p><div th:if="${orden.resumenCierre != null}" class="mt-4 border-t border-border pt-3"><div class="text-xs uppercase tracking-wider text-muted-foreground">Resumen del cierre</div><p class="mt-1 text-sm" th:text="${orden.resumenCierre}">Resumen</p></div></div>
+                <div class="overflow-hidden rounded-xl border border-border"><div class="bg-muted/40 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider">Checklist</div><div class="divide-y divide-border">
+                    <form th:each="item : ${detalle.checklist}" th:action="@{/admin/mantenimiento/checklist}" method="post" class="js-checklist-form flex items-center gap-2 px-4 py-2.5 text-sm">
+                        <input type="hidden" name="checklistId" th:value="${item.id}"><input type="hidden" name="ordenId" th:value="${orden.id}"><input type="hidden" name="buscarFiltro" th:value="${buscar}"><input type="hidden" name="tipoFiltro" th:value="${tipoFiltro}"><input type="hidden" name="estadoFiltro" th:value="${estadoFiltro}"><input type="hidden" name="prioridadFiltro" th:value="${prioridadFiltro}"><input type="hidden" name="pageFiltro" th:value="${ordenes.number}">
+                        <input type="checkbox" class="js-checklist-toggle h-4 w-4 accent-[var(--primary)]" th:checked="${item.completado}" th:disabled="${orden.estado.estaCerrado()}"><span th:text="${item.tarea}" th:classappend="${item.completado ? ' line-through text-muted-foreground' : ''}">Tarea</span>
+                    </form>
+                </div></div>
+                <div class="overflow-hidden rounded-xl border border-border"><div class="flex items-center justify-between bg-muted/40 px-4 py-2.5"><span class="text-xs font-semibold uppercase tracking-wider">Observaciones</span><span class="text-[10px] text-muted-foreground" th:text="${#lists.size(detalle.observaciones) + ' registro(s)'}">0</span></div><div class="space-y-2 p-4"><div th:if="${#lists.isEmpty(detalle.observaciones)}" class="text-sm text-muted-foreground">Sin observaciones.</div><div th:each="observacion : ${detalle.observaciones}" class="rounded-lg bg-muted/40 p-3"><p class="text-sm" th:text="${observacion.texto}">Observación</p><div class="mt-1 text-[10px] text-muted-foreground" th:text="${observacion.usuario.nombre + ' ' + observacion.usuario.apellido + ' · ' + #temporals.format(observacion.fechaCreacion, 'dd/MM/yyyy HH:mm')}">Autor</div></div></div></div>
+            </div>
+            <div class="space-y-3">
+                <div class="rounded-xl border border-border p-4"><div class="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Técnico</div><div class="text-sm font-semibold" th:text="${orden.tecnico != null ? orden.tecnico.nombre + ' ' + orden.tecnico.apellido : 'Sin asignar'}">Técnico</div></div>
+                <div class="rounded-xl border border-border p-4"><div class="text-xs uppercase tracking-wider text-muted-foreground">Equipo</div><div class="mt-1 text-sm font-semibold" th:text="${orden.inventario.nombre}">Equipo</div><div class="text-xs text-muted-foreground" th:text="${orden.inventario.codigo}">SKU</div></div>
+                <div class="rounded-xl border border-border p-4"><div class="text-xs uppercase tracking-wider text-muted-foreground">Cliente / ubicación</div><div class="mt-1 text-sm font-semibold" th:text="${orden.destinoMostrado}">Destino</div></div>
+                <div class="rounded-xl border border-border p-4"><div class="flex items-center justify-between"><div class="text-xs uppercase tracking-wider text-muted-foreground">Evidencias</div><span class="text-xs font-bold" th:text="${#lists.size(detalle.evidencias)}">0</span></div><div class="mt-3 space-y-2"><div th:if="${#lists.isEmpty(detalle.evidencias)}" class="text-xs text-muted-foreground">Sin archivos adjuntos.</div><a th:each="evidencia : ${detalle.evidencias}" th:href="${evidencia.rutaArchivo}" target="_blank" class="flex items-center gap-2 rounded-md border border-border p-2 text-xs hover:bg-accent"><i data-lucide="file-image" class="h-4 w-4 text-primary"></i><span class="min-w-0 flex-1 truncate" th:text="${evidencia.nombreOriginal}">archivo</span><i data-lucide="external-link" class="h-3 w-3"></i></a></div></div>
+                <div class="grid grid-cols-2 gap-3"><div class="rounded-xl border border-border p-3"><div class="text-[10px] uppercase tracking-wider text-muted-foreground">Costo</div><div class="mt-1 text-sm font-bold" th:text="${'$' + #numbers.formatDecimal(orden.costoEstimado, 1, 'COMMA', 2, 'POINT')}">$0</div></div><div class="rounded-xl border border-border p-3"><div class="text-[10px] uppercase tracking-wider text-muted-foreground">Duración</div><div class="mt-1 text-sm font-bold" th:text="${orden.duracionEstimada + ' h'}">0 h</div></div></div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Modal nueva orden -->
+    <div id="modal-new-maintenance" class="maintenance-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm"><div class="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+        <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-primary"><i data-lucide="wrench" class="h-5 w-5"></i></div><div><h2 class="text-lg font-semibold">Nueva orden de mantenimiento</h2><p class="mt-1 text-sm text-muted-foreground">Programa una orden preventiva, correctiva o de emergencia.</p></div><button type="button" class="js-maintenance-close-modal absolute right-4 top-4 p-1 text-muted-foreground"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+        <form id="form-new-maintenance" th:action="@{/admin/mantenimiento}" th:object="${nuevaOrden}" method="post" class="flex min-h-0 flex-1 flex-col" novalidate>
+            <input type="hidden" name="buscarFiltro" th:value="${buscar}"><input type="hidden" name="tipoFiltro" th:value="${tipoFiltro}"><input type="hidden" name="estadoFiltro" th:value="${estadoFiltro}"><input type="hidden" name="prioridadFiltro" th:value="${prioridadFiltro}"><input type="hidden" name="pageFiltro" th:value="${ordenes.number}">
+            <div class="flex-1 space-y-5 overflow-y-auto px-6 py-5"><div class="grid gap-4 sm:grid-cols-2">
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Tipo *</label><select th:field="*{tipo}" required class="maintenance-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">Seleccionar...</option><option th:each="tipo : ${tiposMantenimiento}" th:value="${tipo}" th:text="${tipo.etiqueta}">Tipo</option></select><p th:errors="*{tipo}" class="text-xs text-destructive"></p></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Prioridad *</label><select th:field="*{prioridad}" required class="maintenance-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">Seleccionar...</option><option th:each="prioridad : ${prioridadesMantenimiento}" th:value="${prioridad}" th:text="${prioridad.etiqueta}">Prioridad</option></select><p th:errors="*{prioridad}" class="text-xs text-destructive"></p></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Equipo *</label><select th:field="*{inventarioId}" required class="maintenance-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">Seleccionar...</option><option th:each="equipo : ${equiposMantenimiento}" th:value="${equipo.id}" th:text="${equipo.codigo + ' · ' + equipo.nombre + ' · ' + equipo.estado.etiqueta}">Equipo</option></select><p th:errors="*{inventarioId}" class="text-xs text-destructive"></p></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Cliente</label><select th:field="*{clienteId}" class="maintenance-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">Operación interna / sin cliente</option><option th:each="cliente : ${clientesMantenimiento}" th:value="${cliente.id}" th:text="${cliente.nombreMostrado}">Cliente</option></select></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Ubicación</label><input th:field="*{ubicacion}" maxlength="180" placeholder="Bodega o ubicación física" class="maintenance-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"><p th:errors="*{ubicacion}" class="text-xs text-destructive"></p></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Técnico responsable *</label><select th:field="*{tecnicoId}" required class="maintenance-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">Seleccionar...</option><option th:each="tecnico : ${tecnicosMantenimiento}" th:value="${tecnico.id}" th:text="${tecnico.nombre + ' ' + tecnico.apellido}">Técnico</option></select><p th:errors="*{tecnicoId}" class="text-xs text-destructive"></p></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Fecha programada *</label><input th:field="*{fechaProgramada}" type="date" required class="maintenance-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"><p th:errors="*{fechaProgramada}" class="text-xs text-destructive"></p></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Hora *</label><input th:field="*{horaProgramada}" type="time" required class="maintenance-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"><p th:errors="*{horaProgramada}" class="text-xs text-destructive"></p></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Costo estimado</label><input th:field="*{costoEstimado}" type="number" min="0" step="0.01" required class="maintenance-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"><p th:errors="*{costoEstimado}" class="text-xs text-destructive"></p></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Duración estimada (h)</label><input th:field="*{duracionEstimada}" type="number" min="0.5" step="0.5" required class="maintenance-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"><p th:errors="*{duracionEstimada}" class="text-xs text-destructive"></p></div>
+                <div class="space-y-1.5 sm:col-span-2"><label class="text-xs font-semibold">Descripción del trabajo *</label><textarea th:field="*{descripcion}" required maxlength="4000" rows="4" class="maintenance-control w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"></textarea><p th:errors="*{descripcion}" class="text-xs text-destructive"></p></div>
+            </div><div th:if="${#fields.hasGlobalErrors()}" class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"><p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p></div></div>
+            <div class="flex justify-between border-t border-border bg-muted/30 px-6 py-4"><button type="button" class="js-maintenance-close-modal btn btn-ghost btn-size-default">Cancelar</button><button type="submit" class="btn btn-default btn-size-default"><i data-lucide="wrench" class="h-4 w-4"></i>Crear orden</button></div>
+        </form>
+    </div></div>
+
+    <!-- Modal editar -->
+    <div id="modal-edit-maintenance" class="maintenance-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm"><div class="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+        <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/15 text-amber-500"><i data-lucide="file-pen-line" class="h-5 w-5"></i></div><div><h2 id="edit-maintenance-title" class="text-lg font-semibold">Editar orden</h2><p class="mt-1 text-sm text-muted-foreground">Actualiza programación, responsable y estado operativo.</p></div><button type="button" class="js-maintenance-close-modal absolute right-4 top-4 p-1 text-muted-foreground"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+        <form id="form-edit-maintenance" th:action="@{/admin/mantenimiento/editar}" th:object="${editarOrden}" method="post" class="flex min-h-0 flex-1 flex-col" novalidate>
+            <input id="edit-order-id" type="hidden" th:field="*{id}"><input type="hidden" name="buscarFiltro" th:value="${buscar}"><input type="hidden" name="tipoFiltro" th:value="${tipoFiltro}"><input type="hidden" name="estadoFiltro" th:value="${estadoFiltro}"><input type="hidden" name="prioridadFiltro" th:value="${prioridadFiltro}"><input type="hidden" name="pageFiltro" th:value="${ordenes.number}">
+            <div class="flex-1 overflow-y-auto px-6 py-5"><div class="grid gap-4 sm:grid-cols-2">
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Equipo *</label><select id="edit-order-equipment" th:field="*{inventarioId}" required class="maintenance-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option th:each="equipo : ${equiposMantenimiento}" th:value="${equipo.id}" th:text="${equipo.codigo + ' · ' + equipo.nombre}">Equipo</option></select><p th:errors="*{inventarioId}" class="text-xs text-destructive"></p></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Estado *</label><select id="edit-order-state" th:field="*{estado}" required class="maintenance-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option th:each="estado : ${estadosMantenimiento}" th:value="${estado}" th:text="${estado.etiqueta}">Estado</option></select><p th:errors="*{estado}" class="text-xs text-destructive"></p></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Tipo *</label><select id="edit-order-type" th:field="*{tipo}" required class="maintenance-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option th:each="tipo : ${tiposMantenimiento}" th:value="${tipo}" th:text="${tipo.etiqueta}">Tipo</option></select></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Prioridad *</label><select id="edit-order-priority" th:field="*{prioridad}" required class="maintenance-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option th:each="prioridad : ${prioridadesMantenimiento}" th:value="${prioridad}" th:text="${prioridad.etiqueta}">Prioridad</option></select></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Cliente</label><select id="edit-order-client" th:field="*{clienteId}" class="maintenance-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">Sin cliente</option><option th:each="cliente : ${clientesMantenimiento}" th:value="${cliente.id}" th:text="${cliente.nombreMostrado}">Cliente</option></select></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Ubicación</label><input id="edit-order-location" th:field="*{ubicacion}" maxlength="180" class="maintenance-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Técnico *</label><select id="edit-order-technician" th:field="*{tecnicoId}" required class="maintenance-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option th:each="tecnico : ${tecnicosMantenimiento}" th:value="${tecnico.id}" th:text="${tecnico.nombre + ' ' + tecnico.apellido}">Técnico</option></select></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Fecha *</label><input id="edit-order-date" th:field="*{fechaProgramada}" type="date" required class="maintenance-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Hora *</label><input id="edit-order-time" th:field="*{horaProgramada}" type="time" required class="maintenance-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Costo</label><input id="edit-order-cost" th:field="*{costoEstimado}" type="number" min="0" step="0.01" required class="maintenance-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Duración (h)</label><input id="edit-order-duration" th:field="*{duracionEstimada}" type="number" min="0.5" step="0.5" required class="maintenance-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"></div>
+                <div class="space-y-1.5 sm:col-span-2"><label class="text-xs font-semibold">Descripción *</label><textarea id="edit-order-description" th:field="*{descripcion}" required maxlength="4000" rows="4" class="maintenance-control w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"></textarea></div>
+            </div><div th:if="${#fields.hasAnyErrors()}" class="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"><p th:each="error : ${#fields.allErrors()}" th:text="${error}"></p></div></div>
+            <div class="flex justify-between border-t border-border bg-muted/30 px-6 py-4"><button type="button" class="js-maintenance-close-modal btn btn-ghost btn-size-default">Cancelar</button><button type="submit" class="btn btn-default btn-size-default"><i data-lucide="save" class="h-4 w-4"></i>Guardar cambios</button></div>
+        </form>
+    </div></div>
+
+    <!-- Modal detalle -->
+    <div id="modal-maintenance-detail" class="maintenance-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm"><div class="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"><div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-primary"><i data-lucide="eye" class="h-5 w-5"></i></div><div><h2 id="maintenance-detail-title" class="text-lg font-semibold">Detalle de mantenimiento</h2><p class="mt-1 text-sm text-muted-foreground">Seguimiento técnico, checklist y evidencias.</p></div><button type="button" class="js-maintenance-close-modal absolute right-4 top-4 p-1 text-muted-foreground"><i data-lucide="x" class="h-4 w-4"></i></button></div><div id="maintenance-detail-content" class="flex-1 overflow-y-auto px-6 py-5"></div><div class="flex justify-end border-t border-border bg-muted/30 px-6 py-4"><button type="button" class="js-maintenance-close-modal btn btn-outline btn-size-default">Cerrar</button></div></div></div>
+
+    <!-- Modal técnico -->
+    <div id="modal-assign-technician" class="maintenance-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm"><div class="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"><div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-500"><i data-lucide="user-check" class="h-5 w-5"></i></div><div><h2 class="text-lg font-semibold">Asignar técnico</h2><p id="assign-technician-summary" class="mt-1 text-sm text-muted-foreground">Selecciona un responsable.</p></div><button type="button" class="js-maintenance-close-modal absolute right-4 top-4 p-1 text-muted-foreground"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+        <form id="form-assign-technician" th:action="@{/admin/mantenimiento/tecnico}" th:object="${asignarTecnico}" method="post" novalidate><input id="assign-order-id" type="hidden" th:field="*{ordenId}"><input type="hidden" name="buscarFiltro" th:value="${buscar}"><input type="hidden" name="tipoFiltro" th:value="${tipoFiltro}"><input type="hidden" name="estadoFiltro" th:value="${estadoFiltro}"><input type="hidden" name="prioridadFiltro" th:value="${prioridadFiltro}"><input type="hidden" name="pageFiltro" th:value="${ordenes.number}"><div class="space-y-2 px-6 py-5"><label th:each="tecnico : ${tecnicosMantenimiento}" class="flex cursor-pointer items-center gap-3 rounded-lg border border-border p-3 hover:border-primary"><input type="radio" th:field="*{tecnicoId}" th:value="${tecnico.id}" required class="maintenance-control accent-[var(--primary)]"><span class="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-xs font-bold" th:text="${#strings.substring(tecnico.nombre,0,1) + #strings.substring(tecnico.apellido,0,1)}">GC</span><span class="text-sm font-semibold" th:text="${tecnico.nombre + ' ' + tecnico.apellido}">Técnico</span></label><p th:errors="*{tecnicoId}" class="text-xs text-destructive"></p><div th:if="${#fields.hasGlobalErrors()}" class="text-sm text-destructive"><p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p></div></div><div class="flex justify-between border-t border-border bg-muted/30 px-6 py-4"><button type="button" class="js-maintenance-close-modal btn btn-ghost btn-size-default">Cancelar</button><button class="btn btn-default btn-size-default">Asignar</button></div></form>
+    </div></div>
+
+    <!-- Modal observación -->
+    <div id="modal-add-observation" class="maintenance-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm"><div class="w-full max-w-xl overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"><div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-500/15 text-cyan-500"><i data-lucide="message-square-plus" class="h-5 w-5"></i></div><div><h2 class="text-lg font-semibold">Añadir observación</h2><p id="observation-order-summary" class="mt-1 text-sm text-muted-foreground">Registra una nota interna.</p></div><button type="button" class="js-maintenance-close-modal absolute right-4 top-4 p-1 text-muted-foreground"><i data-lucide="x" class="h-4 w-4"></i></button></div><form id="form-add-observation" th:action="@{/admin/mantenimiento/observaciones}" th:object="${observacionOrden}" method="post" novalidate><input id="observation-order-id" type="hidden" th:field="*{ordenId}"><input type="hidden" name="buscarFiltro" th:value="${buscar}"><input type="hidden" name="tipoFiltro" th:value="${tipoFiltro}"><input type="hidden" name="estadoFiltro" th:value="${estadoFiltro}"><input type="hidden" name="prioridadFiltro" th:value="${prioridadFiltro}"><input type="hidden" name="pageFiltro" th:value="${ordenes.number}"><div class="px-6 py-5"><textarea th:field="*{texto}" required maxlength="3000" rows="5" class="maintenance-control w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm" placeholder="Hallazgo, acción tomada o pendiente..."></textarea><p th:errors="*{texto}" class="mt-1 text-xs text-destructive"></p></div><div class="flex justify-between border-t border-border bg-muted/30 px-6 py-4"><button type="button" class="js-maintenance-close-modal btn btn-ghost btn-size-default">Cancelar</button><button class="btn btn-default btn-size-default">Guardar observación</button></div></form></div></div>
+
+    <!-- Modal evidencia -->
+    <div id="modal-upload-evidence" class="maintenance-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm"><div class="w-full max-w-xl overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"><div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500/15 text-blue-500"><i data-lucide="upload-cloud" class="h-5 w-5"></i></div><div><h2 class="text-lg font-semibold">Subir evidencia</h2><p id="evidence-order-summary" class="mt-1 text-sm text-muted-foreground">Adjunta imágenes o documentos.</p></div><button type="button" class="js-maintenance-close-modal absolute right-4 top-4 p-1 text-muted-foreground"><i data-lucide="x" class="h-4 w-4"></i></button></div><form id="form-upload-evidence" th:action="@{/admin/mantenimiento/evidencias}" method="post" enctype="multipart/form-data"><input id="evidence-order-id" type="hidden" name="ordenId"><input type="hidden" name="buscarFiltro" th:value="${buscar}"><input type="hidden" name="tipoFiltro" th:value="${tipoFiltro}"><input type="hidden" name="estadoFiltro" th:value="${estadoFiltro}"><input type="hidden" name="prioridadFiltro" th:value="${prioridadFiltro}"><input type="hidden" name="pageFiltro" th:value="${ordenes.number}"><div class="space-y-3 px-6 py-5"><label id="maintenance-dropzone" class="block cursor-pointer rounded-xl border-2 border-dashed border-border p-8 text-center hover:border-primary/40"><input id="maintenance-evidence-files" name="archivos" type="file" multiple required accept=".png,.jpg,.jpeg,.pdf" class="hidden"><i data-lucide="upload-cloud" class="mx-auto h-10 w-10 text-muted-foreground"></i><span class="mt-3 block text-sm font-medium">Selecciona hasta 8 archivos</span><span class="mt-1 block text-xs text-muted-foreground">PNG, JPG o PDF — máximo 20 MB cada uno</span></label><div id="maintenance-selected-files" class="hidden space-y-2"></div><div th:if="${mensajeError != null and modalAbierto == 'evidencia'}" class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive" th:text="${mensajeError}">Error</div></div><div class="flex justify-between border-t border-border bg-muted/30 px-6 py-4"><button type="button" class="js-maintenance-close-modal btn btn-ghost btn-size-default">Cancelar</button><button class="btn btn-default btn-size-default"><i data-lucide="upload-cloud" class="h-4 w-4"></i>Subir archivos</button></div></form></div></div>
+
+    <!-- Modal cerrar -->
+    <div id="modal-close-maintenance" class="maintenance-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm"><div class="w-full max-w-xl overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"><div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-500"><i data-lucide="circle-check-big" class="h-5 w-5"></i></div><div><h2 class="text-lg font-semibold">Cerrar orden de mantenimiento</h2><p id="close-order-summary" class="mt-1 text-sm text-muted-foreground">Confirma que el checklist está completo.</p></div><button type="button" class="js-maintenance-close-modal absolute right-4 top-4 p-1 text-muted-foreground"><i data-lucide="x" class="h-4 w-4"></i></button></div><form id="form-close-maintenance" th:action="@{/admin/mantenimiento/cerrar}" th:object="${cerrarOrden}" method="post" novalidate><input id="close-order-id" type="hidden" th:field="*{ordenId}"><input type="hidden" name="buscarFiltro" th:value="${buscar}"><input type="hidden" name="tipoFiltro" th:value="${tipoFiltro}"><input type="hidden" name="estadoFiltro" th:value="${estadoFiltro}"><input type="hidden" name="prioridadFiltro" th:value="${prioridadFiltro}"><input type="hidden" name="pageFiltro" th:value="${ordenes.number}"><div class="space-y-4 px-6 py-5"><div><label class="text-xs font-semibold">Resumen del cierre *</label><textarea th:field="*{resumen}" required maxlength="4000" rows="4" class="maintenance-control mt-1 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"></textarea><p th:errors="*{resumen}" class="text-xs text-destructive"></p></div><div class="grid gap-4 sm:grid-cols-2"><div><label class="text-xs font-semibold">Tiempo real (h) *</label><input th:field="*{horasReales}" type="number" min="0.5" step="0.5" required class="maintenance-control mt-1 h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"><p th:errors="*{horasReales}" class="text-xs text-destructive"></p></div><div><label class="text-xs font-semibold">Próxima revisión</label><input th:field="*{proximaRevision}" type="date" class="maintenance-control mt-1 h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"></div></div><div th:if="${#fields.hasGlobalErrors()}" class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"><p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p></div></div><div class="flex justify-between border-t border-border bg-muted/30 px-6 py-4"><button type="button" class="js-maintenance-close-modal btn btn-ghost btn-size-default">Cancelar</button><button class="btn h-9 bg-emerald-500 px-4 text-white hover:bg-emerald-600">Cerrar orden</button></div></form></div></div>
+
+    <!-- Modal eliminar -->
+    <div id="modal-delete-maintenance" class="maintenance-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm"><div class="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"><div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 items-center justify-center rounded-xl bg-destructive/15 text-destructive"><i data-lucide="triangle-alert" class="h-5 w-5"></i></div><div><h2 class="text-lg font-semibold">Eliminar orden</h2><p class="mt-1 text-sm text-muted-foreground">El registro dejará de mostrarse, pero se conservará para auditoría.</p></div><button type="button" class="js-maintenance-close-modal absolute right-4 top-4 p-1 text-muted-foreground"><i data-lucide="x" class="h-4 w-4"></i></button></div><form id="form-delete-maintenance" th:action="@{/admin/mantenimiento/eliminar}" th:object="${eliminarOrden}" method="post" novalidate><input id="delete-order-id" type="hidden" th:field="*{ordenId}"><input type="hidden" name="buscarFiltro" th:value="${buscar}"><input type="hidden" name="tipoFiltro" th:value="${tipoFiltro}"><input type="hidden" name="estadoFiltro" th:value="${estadoFiltro}"><input type="hidden" name="prioridadFiltro" th:value="${prioridadFiltro}"><input type="hidden" name="pageFiltro" th:value="${ordenes.number}"><div class="px-6 py-5"><p class="text-sm text-muted-foreground">Estás a punto de eliminar <strong id="delete-order-summary" class="text-foreground">esta orden</strong>.</p><div class="mt-4 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-xs text-destructive">Para continuar, escribe <strong>ELIMINAR</strong>.</div><input th:field="*{confirmacion}" required autocomplete="off" placeholder="ELIMINAR" class="maintenance-control mt-3 h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm"><p th:errors="*{confirmacion}" class="mt-1 text-xs text-destructive"></p></div><div class="flex justify-between border-t border-border bg-muted/30 px-6 py-4"><button type="button" class="js-maintenance-close-modal btn btn-ghost btn-size-default">Cancelar</button><button class="btn btn-destructive btn-size-default">Eliminar orden</button></div></form></div></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script th:src="@{/dist/js/mantenimiento.js}"></script>
+</div>
 </body>
 </html>

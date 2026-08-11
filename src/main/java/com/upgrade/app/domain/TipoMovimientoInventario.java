@@ -11,6 +11,8 @@ public enum TipoMovimientoInventario {
     CAMBIO_ESTADO("Cambio de estado"),
     PRESTAMO("Préstamo"),
     DEVOLUCION("Devolución"),
+    INICIO_MANTENIMIENTO("Inicio de mantenimiento"),
+    FIN_MANTENIMIENTO("Fin de mantenimiento"),
     BAJA("Baja");
 
     private final String etiqueta;

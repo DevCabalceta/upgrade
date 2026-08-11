@@ -1,16 +1,239 @@
 <!DOCTYPE html>
-<html th:replace="~{admin/layout/admin-layout :: layout('Colaboradores', 'colaboradores', ~{::#page-content})}" xmlns:th="http://www.thymeleaf.org">
+<html th:replace="~{admin/layout/admin-layout :: layout('Colaboradores', 'colaboradores', ~{::#page-content})}"
+      xmlns:th="http://www.thymeleaf.org">
 <body>
+<div id="page-content" class="space-y-6"
+     th:attr="data-success-message=${mensajeExito},
+              data-error-message=${mensajeError},
+              data-warning-message=${mensajeAdvertencia},
+              data-mail-message=${mensajeCorreo},
+              data-open-modal=${modalAbierto},
+              data-collaborator-modal-id=${colaboradorModalId}">
 
-    <div id="page-content">
-        
-        <h1 class="text-2xl font-bold mb-4">Módulo de Colaboradores</h1>
-        
-        <div class="glass-card p-6 rounded-xl">
-            <p>Aquí va la tabla o el contenido del Colaboradores...</p>
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight md:text-3xl">Colaboradores</h1>
+            <p class="mt-1 text-sm text-muted-foreground">Personal técnico y operativo con acceso al sistema Upgrade.</p>
         </div>
-
+        <div class="flex flex-wrap items-center gap-2">
+            <a th:href="@{/admin/colaboradores/exportar(buscar=${buscar},estado=${estadoFiltro},rol=${rolFiltro})}"
+               class="btn btn-outline btn-size-default"><i data-lucide="download" class="h-4 w-4"></i>Exportar</a>
+            <button id="btn-new-collaborator" type="button" class="btn btn-default btn-size-default">
+                <i data-lucide="user-plus" class="h-4 w-4"></i>Nuevo colaborador
+            </button>
+        </div>
     </div>
 
+    <div class="overflow-hidden rounded-2xl border border-border bg-card">
+        <form id="collaborator-filter-form" th:action="@{/admin/colaboradores}" method="get"
+              class="flex flex-col gap-3 border-b border-border p-4 lg:flex-row lg:items-center">
+            <div class="relative max-w-md flex-1">
+                <i data-lucide="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"></i>
+                <input id="collaborator-search" name="buscar" type="search" th:value="${buscar}"
+                       placeholder="Buscar nombre, usuario, correo o cargo..."
+                       class="h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-3 text-sm outline-none focus:ring-1 focus:ring-ring">
+            </div>
+            <button id="btn-toggle-collaborator-filters" type="button" class="btn btn-outline btn-size-sm lg:ml-auto">
+                <i data-lucide="list-filter" class="h-4 w-4"></i>Filtros
+            </button>
+            <div id="collaborator-filter-options"
+                 th:classappend="${(estadoFiltro != 'todos' or rolFiltro != null) ? ' flex' : ' hidden'}"
+                 class="flex-col gap-2 sm:flex-row">
+                <select id="collaborator-status-filter" name="estado" class="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="todos">Todos los estados</option>
+                    <option th:each="estado : ${estadosColaborador}" th:value="${estado.name()}"
+                            th:text="${estado.etiqueta}" th:selected="${estadoFiltro == estado.name()}">Disponible</option>
+                </select>
+                <select id="collaborator-role-filter" name="rol" class="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="">Todos los roles</option>
+                    <option th:each="rol : ${rolesColaborador}" th:value="${rol.id}" th:text="${rol.nombreMostrado}"
+                            th:selected="${rolFiltro == rol.id}">Rol</option>
+                </select>
+                <a th:href="@{/admin/colaboradores}" class="btn btn-ghost btn-size-sm"><i data-lucide="rotate-ccw" class="h-4 w-4"></i>Limpiar</a>
+            </div>
+            <div class="inline-flex h-9 items-center rounded-lg bg-muted p-1 text-muted-foreground">
+                <button type="button" data-collaborator-view="table" class="collaborator-view-button rounded-md bg-background px-3 py-1 text-xs font-medium text-foreground shadow">Tabla</button>
+                <button type="button" data-collaborator-view="cards" class="collaborator-view-button rounded-md px-3 py-1 text-xs font-medium">Tarjetas</button>
+            </div>
+        </form>
+
+        <div id="collaborator-table-view" th:if="${colaboradores.hasContent()}" class="overflow-x-auto">
+            <table class="w-full min-w-[1080px] text-sm">
+                <thead class="border-b border-border bg-muted/40">
+                <tr class="text-left text-xs text-muted-foreground">
+                    <th class="px-6 py-3.5 font-semibold">Colaborador</th>
+                    <th class="px-4 py-3.5 font-semibold">Cargo</th>
+                    <th class="px-4 py-3.5 font-semibold">Contacto</th>
+                    <th class="px-4 py-3.5 text-center font-semibold">Eventos</th>
+                    <th class="px-4 py-3.5 font-semibold">Estado</th>
+                    <th class="px-4 py-3.5 font-semibold">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="colaborador : ${colaboradores.content}"
+                    class="collaborator-record cursor-pointer border-b border-border transition last:border-0 hover:bg-muted/40"
+                    th:attr="data-collaborator-id=${colaborador.id},
+                             data-first-name=${colaborador.nombre},
+                             data-last-name=${colaborador.apellido},
+                             data-full-name=${colaborador.nombreCompleto},
+                             data-initials=${colaborador.iniciales},
+                             data-username=${colaborador.username},
+                             data-email=${colaborador.email},
+                             data-phone=${colaborador.telefono},
+                             data-position-id=${colaborador.cargo.id},
+                             data-position=${colaborador.cargoNombre},
+                             data-department-id=${colaborador.departamento.id},
+                             data-department=${colaborador.departamentoNombre},
+                             data-status=${colaborador.estadoColaborador.name()},
+                             data-status-label=${colaborador.estadoColaborador.etiqueta},
+                             data-role-id=${colaborador.rolPrincipalId},
+                             data-role-name=${colaborador.rolPrincipalNombre},
+                             data-joined=${colaborador.fechaIngreso},
+                             data-events=${colaborador.eventosAsignados}">
+                    <td class="px-6 py-4">
+                        <div class="flex min-w-56 items-center gap-3">
+                            <div class="brand-gradient flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-black" th:text="${colaborador.iniciales}">GC</div>
+                            <div class="min-w-0"><div class="truncate font-medium" th:text="${colaborador.nombreCompleto}">Nombre</div><div class="truncate text-xs text-muted-foreground" th:text="${'@' + colaborador.username}">@usuario</div></div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-4"><div class="max-w-56 truncate font-medium" th:text="${colaborador.cargoNombre}">Cargo</div><div class="truncate text-xs text-muted-foreground" th:text="${colaborador.departamentoNombre}">Departamento</div></td>
+                    <td class="px-4 py-4"><div class="min-w-52"><div class="flex items-center gap-2"><i data-lucide="mail" class="h-3.5 w-3.5 text-muted-foreground"></i><span class="truncate" th:text="${colaborador.email}">correo</span></div><div class="mt-1 flex items-center gap-2 text-xs text-muted-foreground"><i data-lucide="phone" class="h-3.5 w-3.5"></i><span th:text="${colaborador.telefono ?: 'Sin teléfono'}">Teléfono</span></div></div></td>
+                    <td class="px-4 py-4 text-center font-semibold" th:text="${colaborador.eventosAsignados}">0</td>
+                    <td class="px-4 py-4"><span th:text="${colaborador.estadoColaborador.etiqueta}"
+                        th:classappend="${colaborador.estadoColaborador.name() == 'DISPONIBLE' ? ' border-emerald-500/30 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400' : (colaborador.estadoColaborador.name() == 'EN_EVENTO' ? ' border-primary/30 bg-primary/10 text-primary' : ' border-border bg-muted text-muted-foreground')}"
+                        class="inline-flex rounded-md border px-2.5 py-0.5 text-xs font-semibold">Estado</span></td>
+                    <td class="collaborator-actions px-4 py-4"><div class="inline-flex items-center gap-1.5">
+                        <button type="button" data-collaborator-action="detail" title="Ver detalle" class="js-collaborator-action flex h-8 w-8 items-center justify-center rounded-lg border border-sky-300 bg-sky-50/40 text-sky-600 transition hover:scale-105 hover:bg-sky-100 dark:border-sky-900 dark:bg-sky-950/20 dark:text-sky-400"><i data-lucide="eye" class="h-4 w-4"></i></button>
+                        <button type="button" data-collaborator-action="edit" title="Editar" class="js-collaborator-action flex h-8 w-8 items-center justify-center rounded-lg border border-amber-300 bg-amber-50/40 text-amber-600 transition hover:scale-105 hover:bg-amber-100 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-400"><i data-lucide="pencil" class="h-4 w-4"></i></button>
+                        <button type="button" data-collaborator-action="role" title="Asignar rol" class="js-collaborator-action flex h-8 w-8 items-center justify-center rounded-lg border border-indigo-300 bg-indigo-50/40 text-indigo-600 transition hover:scale-105 hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/20 dark:text-indigo-400"><i data-lucide="shield-check" class="h-4 w-4"></i></button>
+                        <button type="button" data-collaborator-action="delete" title="Eliminar" class="js-collaborator-action flex h-8 w-8 items-center justify-center rounded-lg border border-red-300 bg-red-50/40 text-red-600 transition hover:scale-105 hover:bg-red-100 dark:border-red-900 dark:bg-red-950/20 dark:text-red-400"><i data-lucide="trash-2" class="h-4 w-4"></i></button>
+                    </div></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="collaborator-cards-view" th:if="${colaboradores.hasContent()}" class="hidden grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-3">
+            <article th:each="colaborador : ${colaboradores.content}"
+                     class="collaborator-record rounded-2xl border border-border bg-card p-5 transition hover:shadow-md"
+                     th:attr="data-collaborator-id=${colaborador.id},data-first-name=${colaborador.nombre},data-last-name=${colaborador.apellido},data-full-name=${colaborador.nombreCompleto},data-initials=${colaborador.iniciales},data-username=${colaborador.username},data-email=${colaborador.email},data-phone=${colaborador.telefono},data-position-id=${colaborador.cargo.id},data-position=${colaborador.cargoNombre},data-department-id=${colaborador.departamento.id},data-department=${colaborador.departamentoNombre},data-status=${colaborador.estadoColaborador.name()},data-status-label=${colaborador.estadoColaborador.etiqueta},data-role-id=${colaborador.rolPrincipalId},data-role-name=${colaborador.rolPrincipalNombre},data-joined=${colaborador.fechaIngreso},data-events=${colaborador.eventosAsignados}">
+                <div class="flex items-start justify-between gap-3">
+                    <button type="button" data-collaborator-action="detail" class="js-collaborator-action flex min-w-0 items-center gap-3 text-left">
+                        <span class="brand-gradient flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-bold text-black" th:text="${colaborador.iniciales}">GC</span>
+                        <span class="min-w-0"><span class="block truncate font-semibold" th:text="${colaborador.nombreCompleto}">Nombre</span><span class="block truncate text-xs text-muted-foreground" th:text="${colaborador.cargoNombre}">Cargo</span></span>
+                    </button>
+                    <div class="relative shrink-0">
+                        <button type="button" class="js-collaborator-menu-toggle flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent" aria-expanded="false"><i data-lucide="more-vertical" class="h-4 w-4"></i></button>
+                        <div class="collaborator-card-menu absolute right-0 z-40 mt-1 hidden w-48 rounded-md border border-border bg-popover p-1 text-sm shadow-lg">
+                            <button type="button" data-collaborator-action="detail" class="js-collaborator-action flex w-full items-center rounded-sm px-2 py-1.5 hover:bg-accent"><i data-lucide="eye" class="mr-2 h-4 w-4"></i>Ver detalle</button>
+                            <button type="button" data-collaborator-action="edit" class="js-collaborator-action flex w-full items-center rounded-sm px-2 py-1.5 hover:bg-accent"><i data-lucide="pencil" class="mr-2 h-4 w-4"></i>Editar</button>
+                            <button type="button" data-collaborator-action="role" class="js-collaborator-action flex w-full items-center rounded-sm px-2 py-1.5 hover:bg-accent"><i data-lucide="shield-check" class="mr-2 h-4 w-4"></i>Asignar rol</button>
+                            <div class="my-1 h-px bg-border"></div>
+                            <button type="button" data-collaborator-action="delete" class="js-collaborator-action flex w-full items-center rounded-sm px-2 py-1.5 text-destructive hover:bg-destructive/10"><i data-lucide="trash-2" class="mr-2 h-4 w-4"></i>Eliminar</button>
+                        </div>
+                    </div>
+                </div>
+                <span th:text="${colaborador.estadoColaborador.etiqueta}"
+                      th:classappend="${colaborador.estadoColaborador.name() == 'DISPONIBLE' ? ' border-emerald-500/30 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400' : (colaborador.estadoColaborador.name() == 'EN_EVENTO' ? ' border-primary/30 bg-primary/10 text-primary' : ' border-border bg-muted text-muted-foreground')}"
+                      class="mt-4 inline-flex rounded-md border px-2.5 py-0.5 text-xs font-semibold">Estado</span>
+                <div class="mt-4 space-y-1.5 text-xs text-muted-foreground"><div class="flex items-center gap-2"><i data-lucide="mail" class="h-3.5 w-3.5"></i><span class="truncate" th:text="${colaborador.email}">Correo</span></div><div class="flex items-center gap-2"><i data-lucide="phone" class="h-3.5 w-3.5"></i><span th:text="${colaborador.telefono ?: 'Sin teléfono'}">Teléfono</span></div></div>
+                <div class="mt-4 flex items-end justify-between border-t border-border pt-4 text-xs"><div><span class="text-muted-foreground">Rol</span><div class="font-semibold" th:text="${colaborador.rolPrincipalNombre}">Rol</div></div><div class="text-right"><span class="text-muted-foreground">Eventos</span><div class="font-semibold" th:text="${colaborador.eventosAsignados}">0</div></div></div>
+            </article>
+        </div>
+
+        <div th:unless="${colaboradores.hasContent()}" class="px-6 py-16 text-center"><div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground"><i data-lucide="user-round-search" class="h-6 w-6"></i></div><h3 class="mt-4 font-semibold">No se encontraron colaboradores</h3><p class="mt-1 text-sm text-muted-foreground">Prueba con otros filtros o crea una cuenta nueva.</p></div>
+
+        <div th:if="${colaboradores.hasContent()}" class="flex flex-col gap-3 border-t border-border p-4 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+            <div>Mostrando <span th:text="${colaboradores.number * colaboradores.size + 1}">1</span>–<span th:text="${colaboradores.number * colaboradores.size + colaboradores.numberOfElements}">9</span> de <span th:text="${colaboradores.totalElements}">0</span> colaboradores</div>
+            <nav th:if="${colaboradores.totalPages > 1}" class="flex items-center gap-1">
+                <a th:if="${colaboradores.hasPrevious()}" th:href="@{/admin/colaboradores(page=${colaboradores.number - 1},buscar=${buscar},estado=${estadoFiltro},rol=${rolFiltro})}" class="btn btn-outline btn-size-sm">Anterior</a>
+                <a th:each="numero : ${paginasVisibles}" th:href="@{/admin/colaboradores(page=${numero},buscar=${buscar},estado=${estadoFiltro},rol=${rolFiltro})}" th:text="${numero + 1}" th:class="${numero == colaboradores.number ? 'inline-flex h-8 min-w-8 items-center justify-center rounded-md bg-primary px-2 font-semibold text-primary-foreground' : 'inline-flex h-8 min-w-8 items-center justify-center rounded-md border border-input px-2 hover:bg-accent'}">1</a>
+                <a th:if="${colaboradores.hasNext()}" th:href="@{/admin/colaboradores(page=${colaboradores.number + 1},buscar=${buscar},estado=${estadoFiltro},rol=${rolFiltro})}" class="btn btn-outline btn-size-sm">Siguiente</a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Nuevo colaborador -->
+    <div id="modal-new-collaborator" class="collaborator-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm"><div class="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+        <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-primary"><i data-lucide="user-plus" class="h-5 w-5"></i></div><div><h2 class="text-lg font-semibold">Nuevo colaborador</h2><p class="mt-1 text-sm text-muted-foreground">Crea el perfil y sus credenciales de acceso.</p></div><button type="button" class="js-collaborator-close-modal absolute right-4 top-4 text-muted-foreground"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+        <form id="new-collaborator-form" th:action="@{/admin/colaboradores}" th:object="${nuevoColaborador}" method="post" class="flex min-h-0 flex-1 flex-col" novalidate>
+            <input type="hidden" name="buscarFiltro" th:value="${buscar}"><input type="hidden" name="estadoFiltro" th:value="${estadoFiltro}"><input type="hidden" name="rolFiltro" th:value="${rolFiltro}"><input type="hidden" name="pageFiltro" th:value="${colaboradores.number}">
+            <div class="flex-1 space-y-5 overflow-y-auto px-6 py-5">
+                <div><div class="mb-3 flex items-center gap-2"><span class="h-1 w-1 rounded-full bg-primary"></span><h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Datos personales</h3><span class="h-px flex-1 bg-border"></span></div><div class="grid gap-4 sm:grid-cols-2">
+                    <div class="space-y-1.5"><label class="text-xs font-semibold">Nombre *</label><input th:field="*{nombre}" required maxlength="100" class="collaborator-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"><p th:errors="*{nombre}" class="text-xs text-destructive"></p></div>
+                    <div class="space-y-1.5"><label class="text-xs font-semibold">Apellido *</label><input th:field="*{apellido}" required maxlength="100" class="collaborator-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"><p th:errors="*{apellido}" class="text-xs text-destructive"></p></div>
+                    <div class="space-y-1.5"><label class="text-xs font-semibold">Correo corporativo *</label><input th:field="*{email}" type="email" required maxlength="100" placeholder="usuario@upgrade.com" class="collaborator-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"><p th:errors="*{email}" class="text-xs text-destructive"></p></div>
+                    <div class="space-y-1.5"><label class="text-xs font-semibold">Teléfono</label><input th:field="*{telefono}" maxlength="30" class="collaborator-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"><p th:errors="*{telefono}" class="text-xs text-destructive"></p></div>
+                </div></div>
+                <div><div class="mb-3 flex items-center gap-2"><span class="h-1 w-1 rounded-full bg-primary"></span><h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Acceso al sistema</h3><span class="h-px flex-1 bg-border"></span></div><div class="grid gap-4 sm:grid-cols-2">
+                    <div class="space-y-1.5"><label class="text-xs font-semibold">Usuario *</label><input th:field="*{username}" required minlength="4" maxlength="50" autocomplete="off" class="collaborator-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"><p th:errors="*{username}" class="text-xs text-destructive"></p></div>
+                    <div class="space-y-1.5"><label class="text-xs font-semibold">Rol *</label><select th:field="*{rolId}" required class="collaborator-form-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">Seleccionar...</option><option th:each="rol : ${rolesColaborador}" th:value="${rol.id}" th:text="${rol.nombreMostrado}">Rol</option></select><p th:errors="*{rolId}" class="text-xs text-destructive"></p></div>
+                    <div class="space-y-1.5"><label class="text-xs font-semibold">Contraseña inicial *</label><div class="relative"><input id="new-collaborator-password" th:field="*{password}" type="password" required minlength="8" maxlength="72" autocomplete="new-password" class="collaborator-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 pr-10 text-sm"><button type="button" data-password-target="#new-collaborator-password" class="js-toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"><i data-lucide="eye" class="h-4 w-4"></i></button></div><p th:errors="*{password}" class="text-xs text-destructive"></p></div>
+                    <div class="space-y-1.5"><label class="text-xs font-semibold">Confirmar contraseña *</label><div class="relative"><input id="new-collaborator-confirm-password" th:field="*{confirmarPassword}" type="password" required minlength="8" maxlength="72" autocomplete="new-password" class="collaborator-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 pr-10 text-sm"><button type="button" data-password-target="#new-collaborator-confirm-password" class="js-toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"><i data-lucide="eye" class="h-4 w-4"></i></button></div><p th:errors="*{confirmarPassword}" class="text-xs text-destructive"></p></div>
+                </div><p class="mt-2 text-xs text-muted-foreground">Mínimo 8 caracteres, con mayúscula, minúscula y número. La contraseña se cifra con BCrypt.</p></div>
+                <div><div class="mb-3 flex items-center gap-2"><span class="h-1 w-1 rounded-full bg-primary"></span><h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Información operativa</h3><span class="h-px flex-1 bg-border"></span></div><div class="grid gap-4 sm:grid-cols-2">
+                    <div class="space-y-1.5"><label class="text-xs font-semibold">Cargo *</label><select th:field="*{cargoId}" required class="collaborator-form-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">Seleccionar cargo...</option><option th:each="cargo : ${cargosColaborador}" th:value="${cargo.id}" th:text="${cargo.nombre}">Cargo</option></select><p th:errors="*{cargoId}" class="text-xs text-destructive"></p></div>
+                    <div class="space-y-1.5"><label class="text-xs font-semibold">Departamento *</label><select th:field="*{departamentoId}" required class="collaborator-form-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">Seleccionar departamento...</option><option th:each="departamento : ${departamentosColaborador}" th:value="${departamento.id}" th:text="${departamento.nombre}">Departamento</option></select><p th:errors="*{departamentoId}" class="text-xs text-destructive"></p></div>
+                    <div class="space-y-1.5"><label class="text-xs font-semibold">Estado *</label><select th:field="*{estadoColaborador}" required class="collaborator-form-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option th:each="estado : ${estadosColaborador}" th:value="${estado}" th:text="${estado.etiqueta}">Estado</option></select></div>
+                    <div class="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 sm:col-span-2"><div class="flex items-center gap-2 text-xs font-semibold"><i data-lucide="calendar-check" class="h-4 w-4 text-primary"></i>Fecha de ingreso automática</div><p class="mt-1 text-xs text-muted-foreground">Se registrará la fecha actual al crear el colaborador.</p></div>
+                </div></div>
+                <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm"><input th:field="*{enviarInvitacion}" type="checkbox" class="mt-0.5 h-4 w-4 accent-[var(--primary)]"><span><span class="block font-semibold">Enviar invitación por correo</span><span class="block text-xs text-muted-foreground">Durante las pruebas llegará a <span th:text="${destinatarioCorreo}">correo</span>. La contraseña no se envía.</span></span></label>
+                <div th:if="${#fields.hasGlobalErrors()}" class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"><p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p></div>
+            </div>
+            <div class="flex justify-between border-t border-border bg-muted/30 px-6 py-4"><button type="button" class="js-collaborator-close-modal btn btn-ghost btn-size-default">Cancelar</button><button type="submit" class="btn btn-default btn-size-default"><i data-lucide="user-plus" class="h-4 w-4"></i>Crear colaborador</button></div>
+        </form>
+    </div></div>
+
+    <!-- Editar -->
+    <div id="modal-edit-collaborator" class="collaborator-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm"><div class="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+        <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/15 text-amber-500"><i data-lucide="user-cog" class="h-5 w-5"></i></div><div><h2 class="text-lg font-semibold">Editar colaborador</h2><p id="edit-collaborator-subtitle" class="mt-1 text-sm text-muted-foreground">Actualiza sus datos operativos y de acceso.</p></div><button type="button" class="js-collaborator-close-modal absolute right-4 top-4 text-muted-foreground"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+        <form id="edit-collaborator-form" th:action="@{/admin/colaboradores/editar}" th:object="${editarColaborador}" method="post" class="flex min-h-0 flex-1 flex-col" novalidate>
+            <input id="edit-collaborator-id" type="hidden" th:field="*{id}"><input type="hidden" name="buscarFiltro" th:value="${buscar}"><input type="hidden" name="estadoFiltro" th:value="${estadoFiltro}"><input type="hidden" name="rolFiltro" th:value="${rolFiltro}"><input type="hidden" name="pageFiltro" th:value="${colaboradores.number}">
+            <div class="flex-1 overflow-y-auto px-6 py-5"><div class="grid gap-4 sm:grid-cols-2">
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Nombre *</label><input id="edit-collaborator-first-name" th:field="*{nombre}" required maxlength="100" class="collaborator-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"><p th:errors="*{nombre}" class="text-xs text-destructive"></p></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Apellido *</label><input id="edit-collaborator-last-name" th:field="*{apellido}" required maxlength="100" class="collaborator-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"><p th:errors="*{apellido}" class="text-xs text-destructive"></p></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Usuario *</label><input id="edit-collaborator-username" th:field="*{username}" required maxlength="50" class="collaborator-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"><p th:errors="*{username}" class="text-xs text-destructive"></p></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Correo *</label><input id="edit-collaborator-email" th:field="*{email}" type="email" required maxlength="100" class="collaborator-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"><p th:errors="*{email}" class="text-xs text-destructive"></p></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Teléfono</label><input id="edit-collaborator-phone" th:field="*{telefono}" maxlength="30" class="collaborator-form-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Rol *</label><select id="edit-collaborator-role" th:field="*{rolId}" required class="collaborator-form-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option th:each="rol : ${rolesColaborador}" th:value="${rol.id}" th:text="${rol.nombreMostrado}">Rol</option></select><p th:errors="*{rolId}" class="text-xs text-destructive"></p></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Cargo *</label><select id="edit-collaborator-position" th:field="*{cargoId}" required class="collaborator-form-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">Seleccionar cargo...</option><option th:each="cargo : ${cargosColaborador}" th:value="${cargo.id}" th:text="${cargo.nombre}">Cargo</option></select><p th:errors="*{cargoId}" class="text-xs text-destructive"></p></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Departamento *</label><select id="edit-collaborator-department" th:field="*{departamentoId}" required class="collaborator-form-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">Seleccionar departamento...</option><option th:each="departamento : ${departamentosColaborador}" th:value="${departamento.id}" th:text="${departamento.nombre}">Departamento</option></select><p th:errors="*{departamentoId}" class="text-xs text-destructive"></p></div>
+                <div class="space-y-1.5"><label class="text-xs font-semibold">Estado *</label><select id="edit-collaborator-status" th:field="*{estadoColaborador}" required class="collaborator-form-control h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option th:each="estado : ${estadosColaborador}" th:value="${estado}" th:text="${estado.etiqueta}">Estado</option></select></div>
+            </div><div th:if="${#fields.hasGlobalErrors()}" class="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"><p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p></div></div>
+            <div class="flex justify-between border-t border-border bg-muted/30 px-6 py-4"><button type="button" class="js-collaborator-close-modal btn btn-ghost btn-size-default">Cancelar</button><button type="submit" class="btn btn-default btn-size-default">Guardar cambios</button></div>
+        </form>
+    </div></div>
+
+    <!-- Detalle -->
+    <div id="modal-collaborator-detail" class="collaborator-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm"><div class="w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+        <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-primary"><i data-lucide="eye" class="h-5 w-5"></i></div><div><h2 class="text-lg font-semibold">Detalle del colaborador</h2><p id="detail-collaborator-username" class="mt-1 text-sm text-muted-foreground">@usuario</p></div><button type="button" class="js-collaborator-close-modal absolute right-4 top-4 text-muted-foreground"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+        <div class="space-y-4 px-6 py-5"><div class="flex flex-col gap-4 sm:flex-row sm:items-center"><div id="detail-collaborator-initials" class="brand-gradient flex h-16 w-16 items-center justify-center rounded-full text-lg font-bold text-black">GC</div><div class="min-w-0 flex-1"><h3 id="detail-collaborator-name" class="text-lg font-bold">Nombre</h3><p id="detail-collaborator-subtitle" class="text-sm text-muted-foreground">Cargo · Departamento</p></div><span id="detail-collaborator-status" class="w-fit rounded-md border px-2.5 py-0.5 text-xs font-semibold">Estado</span></div>
+            <div class="grid gap-3 sm:grid-cols-2"><div class="rounded-lg border border-border p-3"><div class="text-[11px] uppercase tracking-wider text-muted-foreground">Correo</div><div id="detail-collaborator-email" class="mt-0.5 break-all text-sm font-medium">—</div></div><div class="rounded-lg border border-border p-3"><div class="text-[11px] uppercase tracking-wider text-muted-foreground">Teléfono</div><div id="detail-collaborator-phone" class="mt-0.5 text-sm font-medium">—</div></div><div class="rounded-lg border border-border p-3"><div class="text-[11px] uppercase tracking-wider text-muted-foreground">Ingreso</div><div id="detail-collaborator-joined" class="mt-0.5 text-sm font-medium">—</div></div><div class="rounded-lg border border-border p-3"><div class="text-[11px] uppercase tracking-wider text-muted-foreground">Departamento</div><div id="detail-collaborator-department" class="mt-0.5 text-sm font-medium">—</div></div><div class="rounded-lg border border-border p-3"><div class="text-[11px] uppercase tracking-wider text-muted-foreground">Rol del sistema</div><div id="detail-collaborator-role" class="mt-0.5 text-sm font-medium">—</div></div><div class="rounded-lg border border-border p-3"><div class="text-[11px] uppercase tracking-wider text-muted-foreground">Eventos asignados</div><div id="detail-collaborator-events" class="mt-0.5 text-sm font-medium">0</div></div></div>
+        </div>
+    </div></div>
+
+    <!-- Rol -->
+    <div id="modal-role-collaborator" class="collaborator-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm"><div class="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+        <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-500"><i data-lucide="shield-check" class="h-5 w-5"></i></div><div><h2 class="text-lg font-semibold">Asignar rol</h2><p id="role-collaborator-subtitle" class="mt-1 text-sm text-muted-foreground">Elige el rol principal del colaborador.</p></div><button type="button" class="js-collaborator-close-modal absolute right-4 top-4 text-muted-foreground"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+        <form id="role-collaborator-form" th:action="@{/admin/colaboradores/rol}" th:object="${asignarRolColaborador}" method="post" class="flex min-h-0 flex-1 flex-col">
+            <input id="role-collaborator-id" type="hidden" th:field="*{colaboradorId}"><input type="hidden" name="buscarFiltro" th:value="${buscar}"><input type="hidden" name="estadoFiltro" th:value="${estadoFiltro}"><input type="hidden" name="rolFiltro" th:value="${rolFiltro}"><input type="hidden" name="pageFiltro" th:value="${colaboradores.number}">
+            <div class="flex-1 space-y-2 overflow-y-auto px-6 py-5"><label th:each="rol : ${rolesColaborador}" class="flex cursor-pointer items-center gap-3 rounded-lg border border-border p-3 transition hover:border-primary"><input type="radio" th:field="*{rolId}" th:value="${rol.id}" class="h-4 w-4 accent-[var(--primary)]"><span class="flex-1"><span class="block text-sm font-semibold" th:text="${rol.nombreMostrado}">Rol</span><span class="block text-xs text-muted-foreground" th:text="${rol.descripcion ?: 'Permisos predefinidos del sistema'}">Descripción</span></span></label><p th:errors="*{rolId}" class="text-xs text-destructive"></p><div th:if="${#fields.hasGlobalErrors()}" class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"><p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p></div></div>
+            <div class="flex justify-between border-t border-border bg-muted/30 px-6 py-4"><button type="button" class="js-collaborator-close-modal btn btn-ghost btn-size-default">Cancelar</button><button type="submit" class="btn btn-default btn-size-default">Asignar rol</button></div>
+        </form>
+    </div></div>
+
+    <!-- Eliminar -->
+    <div id="modal-delete-collaborator" class="collaborator-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm"><div class="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+        <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 items-center justify-center rounded-xl bg-destructive/15 text-destructive"><i data-lucide="triangle-alert" class="h-5 w-5"></i></div><div><h2 class="text-lg font-semibold">Eliminar colaborador</h2><p class="mt-1 text-sm text-muted-foreground">La cuenta será desactivada y perderá el acceso.</p></div><button type="button" class="js-collaborator-close-modal absolute right-4 top-4 text-muted-foreground"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+        <form id="delete-collaborator-form" th:action="@{/admin/colaboradores/eliminar}" th:object="${eliminarColaborador}" method="post">
+            <input id="delete-collaborator-id" type="hidden" th:field="*{id}"><input type="hidden" name="buscarFiltro" th:value="${buscar}"><input type="hidden" name="estadoFiltro" th:value="${estadoFiltro}"><input type="hidden" name="rolFiltro" th:value="${rolFiltro}"><input type="hidden" name="pageFiltro" th:value="${colaboradores.number}">
+            <div class="px-6 py-5"><p class="text-sm text-muted-foreground">Estás a punto de desactivar a <strong id="delete-collaborator-name" class="text-foreground">este colaborador</strong>. Sus registros históricos se conservarán.</p><div class="mt-4 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-xs text-destructive">Para continuar, escribe <strong>ELIMINAR</strong>.</div><input id="delete-collaborator-confirmation" th:field="*{confirmacion}" autocomplete="off" placeholder="ELIMINAR" class="mt-3 h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-destructive"><p th:errors="*{confirmacion}" class="mt-1 text-xs text-destructive"></p><p id="delete-collaborator-help" class="mt-1 text-xs text-muted-foreground">El botón se habilitará al escribir la palabra completa.</p></div>
+            <div class="flex justify-between border-t border-border bg-muted/30 px-6 py-4"><button type="button" class="js-collaborator-close-modal btn btn-ghost btn-size-default">Cancelar</button><button id="delete-collaborator-submit" type="submit" disabled class="btn btn-destructive btn-size-default"><i data-lucide="trash-2" class="h-4 w-4"></i>Eliminar</button></div>
+        </form>
+    </div></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script th:src="@{/dist/js/colaboradores.js}"></script>
+</div>
 </body>
 </html>

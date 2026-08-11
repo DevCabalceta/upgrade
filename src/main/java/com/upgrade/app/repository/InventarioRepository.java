@@ -23,6 +23,9 @@ public interface InventarioRepository extends JpaRepository<Inventario, Long> {
     @EntityGraph(attributePaths = "categoria")
     List<Inventario> findAllByActivoTrueAndCantidadDisponibleGreaterThanOrderByNombreAsc(Integer cantidad);
 
+    @EntityGraph(attributePaths = "categoria")
+    List<Inventario> findAllByActivoTrueOrderByNombreAsc();
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT i FROM Inventario i WHERE i.id = :id AND i.activo = true")
     Optional<Inventario> buscarActivoParaActualizar(@Param("id") Long id);
