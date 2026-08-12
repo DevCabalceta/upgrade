@@ -1,16 +1,18 @@
 <!DOCTYPE html>
-<html th:replace="~{admin/layout/admin-layout :: layout('Cotizaciones', 'cotizaciones', ~{::#page-content})}" xmlns:th="http://www.thymeleaf.org">
+<html th:replace="~{admin/layout/admin-layout :: layout('Cotizaciones', 'cotizaciones', ~{::#page-content})}"
+      xmlns:th="http://www.thymeleaf.org">
 <body>
 
-    <div id="page-content">
-        
-        <h1 class="text-2xl font-bold mb-4">Módulo de Cotizaciones</h1>
-        
-        <div class="glass-card p-6 rounded-xl">
-            <p>Aquí va la tabla o el contenido del Cotizaciones...</p>
-        </div>
-
-    </div>
+<div id="page-content">
+    <div th:replace="~{admin/fragments/module-under-construction :: construction(
+            'Cotizaciones',
+            'Estamos diseñando un espacio para crear propuestas comerciales, calcular totales y dar seguimiento a cada oportunidad sin salir del sistema.',
+            'file-check-2',
+            'Propuestas profesionales',
+            'Cálculos automáticos',
+            'Seguimiento comercial'
+         )}"></div>
+</div>
 
 </body>
 </html>
