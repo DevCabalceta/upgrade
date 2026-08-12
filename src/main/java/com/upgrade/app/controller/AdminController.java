@@ -20,11 +20,6 @@ public class AdminController {
         return "admin/dashboard"; 
     }
 
-    @GetMapping("/servicios")
-    public String servicios() {
-        return "admin/servicios";
-    }
-
     @GetMapping("/cotizaciones")
     public String cotizaciones() {
         return "admin/cotizaciones";

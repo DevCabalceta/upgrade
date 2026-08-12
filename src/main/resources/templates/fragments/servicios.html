@@ -1,66 +1,33 @@
-<section th:fragment="servicios" id="servicios" class="py-24 max-w-7xl mx-auto px-4 lg:px-8">
-    
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<section th:fragment="servicios" id="servicios" class="scroll-mt-24 py-24 max-w-7xl mx-auto px-4 lg:px-8">
     <div class="max-w-2xl mb-16 reveal-element" data-reveal="fade-up">
         <div class="text-xs font-semibold text-primary uppercase tracking-wider">Servicios</div>
         <h2 class="mt-2 text-4xl font-bold tracking-tight">Todo lo que tu evento necesita</h2>
         <p class="mt-3 text-muted-foreground">De la idea al cierre, gestionado por un equipo experto con tecnología de punta.</p>
     </div>
-    
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        
-        <div class="group relative rounded-2xl border border-border bg-card p-6 hover:shadow-xl hover:-translate-y-0.5 hover:border-primary/40 transition-all reveal-element"
-             data-reveal="fade-right" style="transition-delay: 0ms;">
-            <div class="h-12 w-12 rounded-xl brand-gradient flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                <i data-lucide="headphones" class="h-5 w-5 text-black"></i>
-            </div>
-            <h3 class="font-semibold text-lg">Sonido Profesional</h3>
-            <p class="mt-2 text-sm text-muted-foreground">Line array, monitoreo, consolas digitales y técnicos certificados.</p>
-        </div>
 
-        <div class="group relative rounded-2xl border border-border bg-card p-6 hover:shadow-xl hover:-translate-y-0.5 hover:border-primary/40 transition-all reveal-element"
-             data-reveal="fade-left" style="transition-delay: 80ms;">
+    <div th:if="${!#lists.isEmpty(serviciosPublicados)}" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <article th:each="servicio, iteracion : ${serviciosPublicados}"
+                 class="group relative rounded-2xl border border-border bg-card p-6 hover:shadow-xl hover:-translate-y-0.5 hover:border-primary/40 transition-all reveal-element"
+                 th:data-reveal="${iteracion.index % 2 == 0 ? 'fade-right' : 'fade-left'}"
+                 th:style="|transition-delay: ${(iteracion.index % 3) * 80}ms;|">
             <div class="h-12 w-12 rounded-xl brand-gradient flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                <i data-lucide="lightbulb" class="h-5 w-5 text-black"></i>
+                <i th:data-lucide="${servicio.icono}" class="h-5 w-5 text-black"></i>
             </div>
-            <h3 class="font-semibold text-lg">Iluminación</h3>
-            <p class="mt-2 text-sm text-muted-foreground">Cabezas móviles, blinders, LEDs, escenografía lumínica y diseño.</p>
-        </div>
+            <div class="mb-2 inline-flex rounded-md border border-primary/15 bg-primary/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary"
+                 th:text="${servicio.categoria.nombre}">Categoría</div>
+            <h3 class="font-semibold text-lg" th:text="${servicio.nombre}">Servicio</h3>
+            <p class="mt-2 text-sm leading-relaxed text-muted-foreground" th:text="${servicio.descripcion}">Descripción del servicio.</p>
+        </article>
+    </div>
 
-        <div class="group relative rounded-2xl border border-border bg-card p-6 hover:shadow-xl hover:-translate-y-0.5 hover:border-primary/40 transition-all reveal-element"
-             data-reveal="fade-right" style="transition-delay: 160ms;">
-            <div class="h-12 w-12 rounded-xl brand-gradient flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                <i data-lucide="monitor" class="h-5 w-5 text-black"></i>
-            </div>
-            <h3 class="font-semibold text-lg">Pantallas LED</h3>
-            <p class="mt-2 text-sm text-muted-foreground">Indoor y outdoor de alta resolución para cualquier formato.</p>
-        </div>
-
-        <div class="group relative rounded-2xl border border-border bg-card p-6 hover:shadow-xl hover:-translate-y-0.5 hover:border-primary/40 transition-all reveal-element"
-             data-reveal="fade-left" style="transition-delay: 0ms;">
-            <div class="h-12 w-12 rounded-xl brand-gradient flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                <i data-lucide="package" class="h-5 w-5 text-black"></i>
-            </div>
-            <h3 class="font-semibold text-lg">Alquiler de Equipos</h3>
-            <p class="mt-2 text-sm text-muted-foreground">Catálogo completo de equipos audiovisuales para producción.</p>
-        </div>
-
-        <div class="group relative rounded-2xl border border-border bg-card p-6 hover:shadow-xl hover:-translate-y-0.5 hover:border-primary/40 transition-all reveal-element"
-             data-reveal="fade-right" style="transition-delay: 80ms;">
-            <div class="h-12 w-12 rounded-xl brand-gradient flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                <i data-lucide="calendar" class="h-5 w-5 text-black"></i>
-            </div>
-            <h3 class="font-semibold text-lg">Eventos Corporativos</h3>
-            <p class="mt-2 text-sm text-muted-foreground">Logística integral, coordinación y producción ejecutiva.</p>
-        </div>
-
-        <div class="group relative rounded-2xl border border-border bg-card p-6 hover:shadow-xl hover:-translate-y-0.5 hover:border-primary/40 transition-all reveal-element"
-             data-reveal="fade-left" style="transition-delay: 160ms;">
-            <div class="h-12 w-12 rounded-xl brand-gradient flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                <i data-lucide="wrench" class="h-5 w-5 text-black"></i>
-            </div>
-            <h3 class="font-semibold text-lg">Mantenimiento</h3>
-            <p class="mt-2 text-sm text-muted-foreground">Servicio técnico preventivo y correctivo a equipos profesionales.</p>
-        </div>
-
+    <div th:if="${#lists.isEmpty(serviciosPublicados)}" class="rounded-2xl border border-dashed border-border bg-card/50 px-6 py-12 text-center reveal-element" data-reveal="fade-up">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary"><i data-lucide="sparkles" class="h-5 w-5"></i></div>
+        <h3 class="mt-4 font-semibold">Estamos actualizando nuestro catálogo</h3>
+        <p class="mt-1 text-sm text-muted-foreground">Muy pronto encontrarás aquí nuestros servicios disponibles.</p>
     </div>
 </section>
+</body>
+</html>
