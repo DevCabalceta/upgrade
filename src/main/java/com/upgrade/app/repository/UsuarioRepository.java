@@ -17,8 +17,13 @@ import java.util.List;
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     
     // Busca coincidencias tanto en username como en email
-    @EntityGraph(attributePaths = {"roles", "cargo", "departamento"})
+    @EntityGraph(attributePaths = {"roles", "roles.modulos", "cargo", "departamento"})
     Optional<Usuario> findByUsernameOrEmail(String username, String email);
+
+    long countDistinctByActivoTrueAndRolesId(Long rolId);
+
+    @Query("select distinct u.username from Usuario u join u.roles r where u.activo = true and r.id = :rolId")
+    List<String> findUsernamesActivosByRolId(@Param("rolId") Long rolId);
 
     List<Usuario> findAllByActivoTrueOrderByNombreAscApellidoAsc();
 

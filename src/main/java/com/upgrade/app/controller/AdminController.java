@@ -3,15 +3,19 @@ package com.upgrade.app.controller;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.security.core.Authentication;
+import com.upgrade.app.domain.CustomUserDetails;
 
 @Controller
 @RequestMapping("/admin") // Todas las rutas de este controlador empezarán con /admin
 public class AdminController {
     
     @GetMapping({"", "/"})
-    public String adminRoot() {
-        // Redirige automáticamente al navegador de /admin a /admin/dashboard
-        return "redirect:/admin/dashboard";
+    public String adminRoot(Authentication authentication) {
+        if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails usuario) {
+            return "redirect:" + usuario.getRutaInicial();
+        }
+        return "redirect:/login";
     }
 
     @GetMapping("/dashboard")
@@ -30,13 +34,9 @@ public class AdminController {
         return "admin/calendario";
     }
 
-    @GetMapping("/roles")
-    public String roles() {
-        return "admin/roles";
+    @GetMapping("/acceso-denegado")
+    public String accesoDenegado() {
+        return "admin/acceso-denegado";
     }
 
-    @GetMapping("/configuracion")
-    public String configuracion() {
-        return "admin/configuracion";
-    }
 }

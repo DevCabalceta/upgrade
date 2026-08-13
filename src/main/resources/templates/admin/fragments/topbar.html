@@ -49,9 +49,9 @@
                     <span class="h-6 w-px bg-border mx-1"></span>
                     
                     <button id="user-menu-btn" class="flex items-center gap-2 rounded-full hover:bg-muted p-1 pr-2.5 transition hover:cursor-pointer outline-none">
-                        <div class="relative flex h-8 w-8 shrink-0 overflow-hidden rounded-full bg-gradient-to-tr from-primary to-yellow-400 items-center justify-center text-black font-bold text-xs"
-                             sec:authentication="principal.iniciales">
-                            GC
+                        <div class="relative flex h-8 w-8 shrink-0 overflow-hidden rounded-full bg-gradient-to-tr from-primary to-yellow-400 items-center justify-center text-black font-bold text-xs">
+                            <img th:if="${cuentaActual != null and cuentaActual.configuracion.fotoPerfil != null}" th:src="${cuentaActual.configuracion.fotoPerfil}" alt="Perfil" class="h-full w-full object-cover">
+                            <span th:unless="${cuentaActual != null and cuentaActual.configuracion.fotoPerfil != null}" sec:authentication="principal.iniciales">GC</span>
                         </div>
                         <div class="hidden xl:block text-left">
                             <div class="text-xs font-semibold leading-none" sec:authentication="principal.nombreCompleto">Gabriel Cabalceta</div>
@@ -62,8 +62,8 @@
                     <div id="user-dropdown" class="hidden absolute right-0 top-12 mt-1 w-56 rounded-md border border-border bg-background p-1 text-foreground shadow-lg z-50">
                         <div class="px-2 py-1.5 text-sm font-semibold">Mi cuenta</div>
                         <div class="-mx-1 my-1 h-px bg-muted"></div>
-                        <a href="#" class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground">Perfil</a>
-                        <a href="#" class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground">Configuración</a>
+                        <a th:href="@{/admin/configuracion(tab='perfil')}" class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground">Perfil</a>
+                        <a th:href="@{/admin/configuracion(tab='apariencia')}" class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground">Configuración</a>
                         <div class="-mx-1 my-1 h-px bg-muted"></div>
                         <form th:action="@{/logout}" method="post" class="m-0">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">

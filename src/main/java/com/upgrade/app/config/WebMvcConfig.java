@@ -12,13 +12,16 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     private final Path directorioGaleria;
     private final Path directorioMantenimiento;
+    private final Path directorioPerfil;
 
     public WebMvcConfig(
             @Value("${app.upload.gallery-dir:uploads/gallery}") String directorioGaleria,
-            @Value("${app.upload.maintenance-dir:uploads/maintenance}") String directorioMantenimiento
+            @Value("${app.upload.maintenance-dir:uploads/maintenance}") String directorioMantenimiento,
+            @Value("${app.upload.profile-dir:uploads/profile}") String directorioPerfil
     ) {
         this.directorioGaleria = Path.of(directorioGaleria).toAbsolutePath().normalize();
         this.directorioMantenimiento = Path.of(directorioMantenimiento).toAbsolutePath().normalize();
+        this.directorioPerfil = Path.of(directorioPerfil).toAbsolutePath().normalize();
     }
 
     @Override
@@ -36,5 +39,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
         }
         registry.addResourceHandler("/uploads/maintenance/**")
                 .addResourceLocations(ubicacionMantenimiento);
+
+        String ubicacionPerfil = directorioPerfil.toUri().toString();
+        if (!ubicacionPerfil.endsWith("/")) ubicacionPerfil += "/";
+        registry.addResourceHandler("/uploads/profile/**").addResourceLocations(ubicacionPerfil);
     }
 }

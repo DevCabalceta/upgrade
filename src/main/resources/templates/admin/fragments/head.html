@@ -6,9 +6,13 @@
     
     <title th:text="${pageTitle != null ? pageTitle + ' — Upgrade' : 'Upgrade'}">Upgrade</title>
 
-    <script>
+    <script th:inline="javascript">
         const STORAGE_KEY = 'upgrade-theme';
-        if (localStorage.getItem(STORAGE_KEY) === 'dark' || (!(STORAGE_KEY in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        const SERVER_THEME = /*[[${cuentaActual != null ? cuentaActual.configuracion.tema : null}]]*/ null;
+        if (localStorage.getItem(STORAGE_KEY) === null && (SERVER_THEME === 'light' || SERVER_THEME === 'dark')) {
+            localStorage.setItem(STORAGE_KEY, SERVER_THEME);
+        }
+        if (localStorage.getItem(STORAGE_KEY) === 'dark' || (localStorage.getItem(STORAGE_KEY) === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         } else {
             document.documentElement.classList.remove('dark');
@@ -152,6 +156,9 @@
           html { scroll-behavior: auto; }
         }
       }
+
+      body[data-density="compact"] #main-wrapper > main { padding-top: 1rem; padding-bottom: 1rem; }
+      body[data-density="spacious"] #main-wrapper > main { padding-top: 2.5rem; padding-bottom: 2.5rem; }
 
       /* 4. Animaciones y Grid Masonry */
       @layer utilities {

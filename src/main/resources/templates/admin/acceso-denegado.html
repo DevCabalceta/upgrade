@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html th:replace="~{admin/layout/admin-layout :: layout('Acceso restringido', '', ~{::#page-content})}"
+      xmlns:th="http://www.thymeleaf.org">
+<body>
+<div id="page-content" class="flex min-h-[calc(100vh-8rem)] items-center justify-center">
+    <div class="w-full max-w-xl rounded-3xl border border-border bg-card p-8 text-center shadow-sm">
+        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+            <i data-lucide="shield-alert" class="h-8 w-8"></i>
+        </div>
+        <h1 class="mt-5 text-2xl font-bold">No tienes acceso a este módulo</h1>
+        <p class="mx-auto mt-2 max-w-md text-sm text-muted-foreground">Solicita a un administrador que habilite el módulo para tu rol. El permiso concederá acceso completo a sus funciones.</p>
+        <a th:href="@{/admin}" class="btn btn-default btn-size-default mt-6"><i data-lucide="arrow-left"></i>Ir a mi inicio</a>
+    </div>
+</div>
+</body>
+</html>

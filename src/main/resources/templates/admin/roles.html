@@ -1,16 +1,134 @@
 <!DOCTYPE html>
-<html th:replace="~{admin/layout/admin-layout :: layout('Roles', 'roles', ~{::#page-content})}" xmlns:th="http://www.thymeleaf.org">
+<html th:replace="~{admin/layout/admin-layout :: layout('Roles y permisos', 'roles', ~{::#page-content})}"
+      xmlns:th="http://www.thymeleaf.org">
 <body>
+<div id="page-content" class="space-y-6" th:data-open-modal="${modalAbierto}" th:data-success-message="${mensajeExito}">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .role-card:hover .role-card-menu-trigger,.role-card:focus-within .role-card-menu-trigger{opacity:1;pointer-events:auto}
+        @media(max-width:767px){.role-card-menu-trigger{opacity:1!important;pointer-events:auto!important}}
+        .module-access-input:checked+span{background:var(--primary)}
+        .module-access-input:checked+span span{transform:translateX(1.25rem)}
+    </style>
 
-    <div id="page-content">
-        
-        <h1 class="text-2xl font-bold mb-4">Módulo de Roles</h1>
-        
-        <div class="glass-card p-6 rounded-xl">
-            <p>Aquí va la tabla o el contenido del Roles...</p>
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight md:text-3xl">Roles y permisos</h1>
+            <p class="mt-1 text-sm text-muted-foreground">Administra el acceso total de cada rol a los módulos del sistema.</p>
         </div>
-
+        <button id="btn-new-role" type="button" class="btn btn-default btn-size-default font-semibold"><i data-lucide="plus"></i>Nuevo rol</button>
     </div>
 
+    <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div class="rounded-2xl border border-border bg-card p-5"><div class="flex items-start justify-between"><div class="text-xs text-muted-foreground">Roles configurados</div><div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><i data-lucide="shield-check" class="h-4 w-4"></i></div></div><div class="mt-2 text-2xl font-bold" th:text="${estadisticas.roles}">0</div></div>
+        <div class="rounded-2xl border border-border bg-card p-5"><div class="flex items-start justify-between"><div class="text-xs text-muted-foreground">Usuarios asignados</div><div class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500"><i data-lucide="users" class="h-4 w-4"></i></div></div><div class="mt-2 text-2xl font-bold" th:text="${estadisticas.usuariosAsignados}">0</div></div>
+        <div class="rounded-2xl border border-border bg-card p-5"><div class="flex items-start justify-between"><div class="text-xs text-muted-foreground">Módulos protegidos</div><div class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-500"><i data-lucide="blocks" class="h-4 w-4"></i></div></div><div class="mt-2 text-2xl font-bold" th:text="${estadisticas.modulos}">0</div></div>
+        <div class="rounded-2xl border border-border bg-card p-5"><div class="flex items-start justify-between"><div class="text-xs text-muted-foreground">Accesos asignados</div><div class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500"><i data-lucide="key-round" class="h-4 w-4"></i></div></div><div class="mt-2 text-2xl font-bold" th:text="${estadisticas.accesos}">0</div></div>
+    </div>
+
+    <div th:if="${not #lists.isEmpty(rolesResumen)}" class="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <article th:each="resumen : ${rolesResumen}" class="role-card relative rounded-xl border bg-card p-4 transition hover:border-primary/40 hover:shadow-sm"
+                 th:classappend="${rolSeleccionado != null and resumen.rol.id == rolSeleccionado.id} ? 'border-primary ring-1 ring-primary/20' : 'border-border'">
+            <a th:href="@{/admin/roles(rol=${resumen.rol.id})}" class="absolute inset-0 rounded-xl" th:aria-label="|Seleccionar ${resumen.rol.nombreMostrado}|"></a>
+            <div class="relative pointer-events-none">
+                <div class="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary"><i data-lucide="shield" class="h-4 w-4"></i></div>
+                <div class="truncate text-sm font-semibold" th:text="${resumen.rol.nombreMostrado}">Rol</div>
+                <div class="mt-1 text-xs text-muted-foreground" th:text="|${resumen.usuarios} usuario${resumen.usuarios == 1 ? '' : 's'}|">0 usuarios</div>
+                <div class="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground"><i data-lucide="blocks" class="h-3 w-3"></i><span th:text="|${#sets.size(resumen.rol.modulos)} módulos|">0 módulos</span></div>
+            </div>
+            <div class="absolute right-2 top-2 z-10">
+                <button type="button" class="role-card-menu-trigger js-role-menu-trigger flex h-8 w-8 items-center justify-center rounded-md opacity-0 pointer-events-none hover:bg-accent" aria-label="Acciones"><i data-lucide="more-vertical" class="h-4 w-4"></i></button>
+                <div class="js-role-menu absolute right-0 top-9 z-20 hidden w-52 rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-xl">
+                    <a th:href="@{/admin/roles(rol=${resumen.rol.id},modal='ver')}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-accent"><i data-lucide="eye" class="h-4 w-4"></i>Ver detalle</a>
+                    <a th:unless="${resumen.rol.protegido}" th:href="@{/admin/roles(rol=${resumen.rol.id},modal='editar')}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-accent"><i data-lucide="edit" class="h-4 w-4"></i>Editar rol</a>
+                    <a th:unless="${resumen.rol.protegido}" th:href="@{/admin/roles(rol=${resumen.rol.id},modal='accesos')}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-accent"><i data-lucide="key-square" class="h-4 w-4"></i>Asignar módulos</a>
+                    <div th:unless="${resumen.rol.protegido}" class="my-1 h-px bg-border"></div>
+                    <a th:unless="${resumen.rol.protegido}" th:href="@{/admin/roles(rol=${resumen.rol.id},modal='eliminar')}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-destructive hover:bg-destructive/10"><i data-lucide="trash-2" class="h-4 w-4"></i>Eliminar</a>
+                    <div th:if="${resumen.rol.protegido}" class="flex items-center gap-2 px-3 py-2 text-[11px] text-muted-foreground"><i data-lucide="lock-keyhole" class="h-3.5 w-3.5"></i>Rol protegido</div>
+                </div>
+            </div>
+        </article>
+    </div>
+
+    <div th:if="${rolSeleccionado != null}" class="overflow-hidden rounded-2xl border border-border bg-card">
+        <div class="flex flex-col gap-4 border-b border-border p-4 lg:flex-row lg:items-center lg:justify-between">
+            <div><div class="font-semibold">Acceso por módulo</div><div class="mt-0.5 text-xs text-muted-foreground">Un interruptor concede acceso completo: consultar, crear, editar y eliminar.</div></div>
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <select id="permission-role-select" class="h-9 min-w-52 rounded-md border border-input bg-background px-3 text-sm shadow-sm outline-none focus:ring-1 focus:ring-ring">
+                    <option th:each="resumen : ${rolesResumen}" th:value="${resumen.rol.id}" th:text="${resumen.rol.nombreMostrado}" th:selected="${resumen.rol.id == rolSeleccionado.id}">Rol</option>
+                </select>
+                <a th:unless="${rolSeleccionado.protegido}" th:href="@{/admin/roles(rol=${rolSeleccionado.id},modal='accesos')}" class="btn btn-outline btn-size-sm"><i data-lucide="expand"></i>Ampliar</a>
+            </div>
+        </div>
+        <div class="flex flex-col gap-3 border-b border-border bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="relative max-w-sm flex-1"><i data-lucide="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"></i><input id="permission-module-search" type="search" placeholder="Buscar módulo…" class="h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm shadow-sm outline-none focus:ring-1 focus:ring-ring"/></div>
+            <div class="flex items-center gap-3 text-xs"><span id="permission-enabled-count" class="font-semibold text-foreground">0 módulos activos</span><button th:unless="${rolSeleccionado.protegido}" id="btn-enable-all" type="button" class="font-medium text-primary hover:underline">Activar todos</button><button th:unless="${rolSeleccionado.protegido}" id="btn-disable-all" type="button" class="font-medium text-muted-foreground hover:text-foreground">Quitar todos</button></div>
+        </div>
+        <form id="form-inline-access" th:action="@{/admin/roles/accesos}" th:object="${accesosRol}" method="post">
+            <input th:field="*{rolId}" type="hidden"/>
+            <div th:if="${#fields.hasGlobalErrors()}" class="m-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive" th:each="error : ${#fields.globalErrors()}" th:text="${error}">Error</div>
+            <div id="permission-module-grid" class="grid gap-3 p-4 lg:grid-cols-2">
+                <label th:each="modulo : ${modulos}" class="module-access-card flex cursor-pointer items-center gap-3 rounded-xl border border-border p-4 transition hover:border-primary/40" th:data-module-name="${#strings.toLowerCase(modulo.nombre + ' ' + modulo.descripcion)}">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground"><i th:data-lucide="${modulo.icono}" class="h-4 w-4"></i></div>
+                    <span class="min-w-0 flex-1"><span class="block text-sm font-semibold" th:text="${#strings.capitalize(#strings.toLowerCase(modulo.nombre))}">Módulo</span><span class="block truncate text-xs text-muted-foreground" th:text="${modulo.descripcion}">Descripción</span></span>
+                    <span th:if="${rolSeleccionado.protegido}" class="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-[10px] font-semibold text-primary"><i data-lucide="lock" class="h-3 w-3"></i>Completo</span>
+                    <span th:unless="${rolSeleccionado.protegido}" class="relative inline-flex shrink-0 items-center">
+                        <input class="module-access-input sr-only" type="checkbox" name="moduloIds" th:value="${modulo.id}" th:checked="${accesosRol.moduloIds.contains(modulo.id)}"/>
+                        <span class="relative h-5 w-10 rounded-full bg-muted transition"><span class="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform"></span></span>
+                    </span>
+                </label>
+            </div>
+            <div id="permission-empty-state" class="hidden px-6 py-12 text-center text-sm text-muted-foreground">No se encontraron módulos.</div>
+            <div th:unless="${rolSeleccionado.protegido}" class="flex items-center justify-between border-t border-border bg-muted/20 px-4 py-3"><span class="text-xs text-muted-foreground">Los usuarios conectados con este rol deberán iniciar sesión de nuevo.</span><button class="btn btn-default btn-size-default font-semibold" type="submit"><i data-lucide="save"></i>Guardar accesos</button></div>
+            <div th:if="${rolSeleccionado.protegido}" class="border-t border-border bg-muted/20 px-4 py-3 text-xs text-muted-foreground"><i data-lucide="shield-check" class="mr-1 inline h-3.5 w-3.5 text-primary"></i>Administrador siempre conserva acceso completo a todos los módulos.</div>
+        </form>
+    </div>
+
+    <div th:if="${#lists.isEmpty(rolesResumen)}" class="rounded-2xl border border-dashed border-border bg-card p-12 text-center"><i data-lucide="shield-off" class="mx-auto h-8 w-8 text-muted-foreground"></i><h2 class="mt-3 font-semibold">No hay roles activos</h2><p class="mt-1 text-sm text-muted-foreground">Crea el primer rol para comenzar.</p></div>
+
+    <div id="modal-new-role" class="role-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div class="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary"><i data-lucide="shield-plus" class="h-5 w-5"></i></div><div class="flex-1 pr-6"><h2 class="text-lg font-semibold">Nuevo rol</h2><p class="mt-1 text-sm text-muted-foreground">Define un rol y, opcionalmente, copia los módulos de otro.</p></div><button type="button" class="js-role-close-modal absolute right-4 top-4 rounded-md p-1 text-muted-foreground hover:bg-accent"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+            <form id="form-new-role" th:action="@{/admin/roles}" th:object="${nuevoRol}" method="post" class="flex min-h-0 flex-1 flex-col" novalidate="novalidate">
+                <div class="flex-1 space-y-4 overflow-y-auto px-6 py-5">
+                    <div th:if="${#fields.hasGlobalErrors()}" th:each="error : ${#fields.globalErrors()}" th:text="${error}" class="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">Error</div>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="space-y-1.5"><label class="text-xs font-semibold">Nombre del rol <span class="text-destructive">*</span></label><input th:field="*{nombre}" required="required" maxlength="100" placeholder="Supervisor de bodega" class="role-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm outline-none focus:ring-1 focus:ring-ring"/><p th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="text-xs text-destructive"></p></div>
+                        <div class="space-y-1.5"><label class="text-xs font-semibold">Identificador <span class="text-destructive">*</span></label><input th:field="*{identificador}" required="required" maxlength="50" pattern="[a-zA-Z0-9_]+" placeholder="SUPERVISOR_BODEGA" class="role-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm uppercase outline-none focus:ring-1 focus:ring-ring"/><p class="text-[11px] text-muted-foreground">Letras, números y guiones bajos.</p><p th:if="${#fields.hasErrors('identificador')}" th:errors="*{identificador}" class="text-xs text-destructive"></p></div>
+                    </div>
+                    <div class="space-y-1.5"><label class="text-xs font-semibold">Descripción <span class="text-destructive">*</span></label><textarea th:field="*{descripcion}" required="required" maxlength="255" rows="3" class="role-control w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring" placeholder="Describe para qué se utilizará este rol…"></textarea><p th:if="${#fields.hasErrors('descripcion')}" th:errors="*{descripcion}" class="text-xs text-destructive"></p></div>
+                    <div class="space-y-1.5"><label class="text-xs font-semibold">Copiar accesos de</label><select th:field="*{plantillaId}" class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">Sin plantilla</option><option th:each="resumen : ${rolesResumen}" th:value="${resumen.rol.id}" th:text="|${resumen.rol.nombreMostrado} · ${#sets.size(resumen.rol.modulos)} módulos|">Rol</option></select><p class="text-[11px] text-muted-foreground">Después podrás ajustar los módulos individualmente.</p></div>
+                </div>
+                <div class="flex flex-col-reverse gap-2 border-t border-border bg-muted/30 px-6 py-4 sm:flex-row sm:justify-between"><button type="button" class="js-role-close-modal btn btn-ghost btn-size-default">Cancelar</button><button type="submit" class="btn btn-default btn-size-default font-semibold"><i data-lucide="shield-plus"></i>Crear rol</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-edit-role" class="role-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div class="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary"><i data-lucide="file-edit" class="h-5 w-5"></i></div><div class="flex-1 pr-6"><h2 class="text-lg font-semibold">Editar rol</h2><p class="mt-1 text-sm text-muted-foreground">Actualiza el nombre visible y la descripción.</p></div><button type="button" class="js-role-close-modal absolute right-4 top-4 rounded-md p-1 text-muted-foreground hover:bg-accent"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+            <form id="form-edit-role" th:action="@{/admin/roles/editar}" th:object="${editarRol}" method="post" class="flex min-h-0 flex-1 flex-col" novalidate="novalidate">
+                <input th:field="*{id}" type="hidden"/><div class="flex-1 space-y-4 overflow-y-auto px-6 py-5"><div th:if="${#fields.hasGlobalErrors()}" th:each="error : ${#fields.globalErrors()}" th:text="${error}" class="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">Error</div><div class="space-y-1.5"><label class="text-xs font-semibold">Nombre <span class="text-destructive">*</span></label><input th:field="*{nombre}" required="required" maxlength="100" class="role-control h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-ring"/><p th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="text-xs text-destructive"></p></div><div class="space-y-1.5"><label class="text-xs font-semibold">Descripción <span class="text-destructive">*</span></label><textarea th:field="*{descripcion}" required="required" maxlength="255" rows="4" class="role-control w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"></textarea><p th:if="${#fields.hasErrors('descripcion')}" th:errors="*{descripcion}" class="text-xs text-destructive"></p></div><div class="rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground"><i data-lucide="info" class="mr-1 inline h-3.5 w-3.5"></i>El identificador técnico no cambia para no afectar las relaciones existentes.</div></div>
+                <div class="flex flex-col-reverse gap-2 border-t border-border bg-muted/30 px-6 py-4 sm:flex-row sm:justify-between"><button type="button" class="js-role-close-modal btn btn-ghost btn-size-default">Cancelar</button><button type="submit" class="btn btn-default btn-size-default font-semibold"><i data-lucide="save"></i>Guardar cambios</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-view-role" class="role-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div th:if="${rolSeleccionado != null}" class="w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"><div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary"><i data-lucide="shield-check" class="h-5 w-5"></i></div><div class="flex-1 pr-6"><h2 class="text-lg font-semibold" th:text="${rolSeleccionado.nombreMostrado}">Rol</h2><p class="mt-1 text-sm text-muted-foreground" th:text="${rolSeleccionado.descripcion}">Descripción</p></div><button type="button" class="js-role-close-modal absolute right-4 top-4 rounded-md p-1 text-muted-foreground hover:bg-accent"><i data-lucide="x" class="h-4 w-4"></i></button></div><div class="space-y-5 px-6 py-5"><div class="grid grid-cols-3 gap-3"><div class="rounded-xl border border-border p-3"><div class="text-[10px] uppercase tracking-wider text-muted-foreground">Usuarios</div><div class="mt-1 text-xl font-bold" th:text="${usuariosRolSeleccionado}">0</div></div><div class="rounded-xl border border-border p-3"><div class="text-[10px] uppercase tracking-wider text-muted-foreground">Módulos</div><div class="mt-1 text-xl font-bold" th:text="${#sets.size(rolSeleccionado.modulos)}">0</div></div><div class="rounded-xl border border-border p-3"><div class="text-[10px] uppercase tracking-wider text-muted-foreground">Estado</div><div class="mt-1 text-sm font-bold text-emerald-500">Activo</div></div></div><div><div class="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Acceso completo a</div><div class="flex flex-wrap gap-2"><span th:each="modulo : ${rolSeleccionado.modulos}" class="inline-flex items-center gap-1.5 rounded-lg border border-primary/20 bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary"><i th:data-lucide="${modulo.icono}" class="h-3.5 w-3.5"></i><span th:text="${#strings.capitalize(#strings.toLowerCase(modulo.nombre))}">Módulo</span></span><span th:if="${#sets.isEmpty(rolSeleccionado.modulos)}" class="text-sm text-muted-foreground">Sin módulos asignados.</span></div></div></div><div class="flex justify-end border-t border-border bg-muted/30 px-6 py-4"><button type="button" class="js-role-close-modal btn btn-outline btn-size-default">Cerrar</button></div></div>
+    </div>
+
+    <div id="modal-access-role" class="role-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div th:if="${rolSeleccionado != null}" class="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"><div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary"><i data-lucide="key-square" class="h-5 w-5"></i></div><div class="flex-1 pr-6"><h2 class="text-lg font-semibold" th:text="|Módulos de ${rolSeleccionado.nombreMostrado}|">Asignar módulos</h2><p class="mt-1 text-sm text-muted-foreground">Cada selección concede acceso completo al módulo.</p></div><button type="button" class="js-role-close-modal absolute right-4 top-4 rounded-md p-1 text-muted-foreground hover:bg-accent"><i data-lucide="x" class="h-4 w-4"></i></button></div>
+            <form th:action="@{/admin/roles/accesos}" th:object="${accesosRol}" method="post" class="flex min-h-0 flex-1 flex-col"><input th:field="*{rolId}" type="hidden"/><div class="grid flex-1 gap-3 overflow-y-auto p-6 md:grid-cols-2"><label th:each="modulo : ${modulos}" class="flex cursor-pointer items-center gap-3 rounded-xl border border-border p-4 hover:border-primary/40"><div class="flex h-10 w-10 items-center justify-center rounded-xl bg-muted text-muted-foreground"><i th:data-lucide="${modulo.icono}" class="h-4 w-4"></i></div><span class="flex-1"><span class="block text-sm font-semibold" th:text="${#strings.capitalize(#strings.toLowerCase(modulo.nombre))}">Módulo</span><span class="block text-xs text-muted-foreground" th:text="${modulo.descripcion}">Descripción</span></span><input type="checkbox" name="moduloIds" th:value="${modulo.id}" th:checked="${accesosRol.moduloIds.contains(modulo.id)}" class="h-4 w-4 accent-[var(--primary)]"/></label></div><div class="flex flex-col-reverse gap-2 border-t border-border bg-muted/30 px-6 py-4 sm:flex-row sm:justify-between"><button type="button" class="js-role-close-modal btn btn-ghost btn-size-default">Cancelar</button><button type="submit" class="btn btn-default btn-size-default font-semibold"><i data-lucide="save"></i>Guardar accesos</button></div></form>
+        </div>
+    </div>
+
+    <div id="modal-delete-role" class="role-modal fixed inset-0 z-[70] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div th:if="${rolSeleccionado != null}" class="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"><div class="relative flex items-start gap-4 border-b border-border px-6 pb-4 pt-6"><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-destructive/15 text-destructive"><i data-lucide="alert-triangle" class="h-5 w-5"></i></div><div class="flex-1 pr-6"><h2 class="text-lg font-semibold">Eliminar rol</h2><p class="mt-1 text-sm text-muted-foreground">Esta acción no se puede deshacer.</p></div><button type="button" class="js-role-close-modal absolute right-4 top-4 rounded-md p-1 text-muted-foreground hover:bg-accent"><i data-lucide="x" class="h-4 w-4"></i></button></div><form id="form-delete-role" th:action="@{/admin/roles/eliminar}" th:object="${eliminarRol}" method="post"><input th:field="*{id}" type="hidden"/><div class="space-y-4 px-6 py-5"><div th:if="${#fields.hasGlobalErrors()}" th:each="error : ${#fields.globalErrors()}" th:text="${error}" class="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">Error</div><p class="text-sm text-muted-foreground">Estás a punto de eliminar <strong class="text-foreground" th:text="|“${rolSeleccionado.nombreMostrado}”|">el rol</strong>. Solo es posible si no tiene usuarios asignados.</p><div class="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-xs text-destructive">Para continuar, escribe <strong>ELIMINAR</strong>.</div><input id="delete-role-confirmation" th:field="*{confirmacion}" autocomplete="off" placeholder="ELIMINAR" class="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-1 focus:ring-destructive"/></div><div class="flex flex-col-reverse gap-2 border-t border-border bg-muted/30 px-6 py-4 sm:flex-row sm:justify-between"><button type="button" class="js-role-close-modal btn btn-ghost btn-size-default">Cancelar</button><button type="submit" class="btn btn-destructive btn-size-default font-semibold"><i data-lucide="trash-2"></i>Eliminar rol</button></div></form></div>
+    </div>
+
+    <script th:src="@{/dist/js/roles.js}"></script>
+</div>
 </body>
 </html>
