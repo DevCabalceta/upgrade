@@ -71,4 +71,10 @@ public interface InventarioRepository extends JpaRepository<Inventario, Long> {
 
     @Query(value = "SELECT COALESCE(SUM(valor_unitario * cantidad_total), 0) FROM inventario WHERE activo = TRUE", nativeQuery = true)
     BigDecimal sumarValorInventarioActivo();
+
+    @Query("SELECT COALESCE(SUM(i.cantidadDisponible), 0) FROM Inventario i WHERE i.activo = true")
+    long sumarCantidadDisponible();
+
+    @Query("SELECT COALESCE(SUM(i.cantidadTotal), 0) FROM Inventario i WHERE i.activo = true")
+    long sumarCantidadTotal();
 }

@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface OrdenMantenimientoRepository extends JpaRepository<OrdenMantenimiento, Long> {
@@ -88,4 +89,21 @@ public interface OrdenMantenimientoRepository extends JpaRepository<OrdenManteni
               AND o.fechaProgramada BETWEEN :inicio AND :fin
             """)
     BigDecimal sumarCostoEntre(@Param("inicio") LocalDate inicio, @Param("fin") LocalDate fin);
+
+    @EntityGraph(attributePaths = {"inventario", "cliente", "tecnico"})
+    List<OrdenMantenimiento> findTop5ByActivoTrueOrderByFechaActualizacionDesc();
+
+    @EntityGraph(attributePaths = {"inventario", "cliente", "tecnico"})
+    @Query("""
+            SELECT o FROM OrdenMantenimiento o
+            WHERE o.activo = true
+              AND o.estado IN :estados
+              AND o.fechaProgramada >= :hoy
+            ORDER BY o.fechaProgramada ASC, o.horaProgramada ASC, o.id ASC
+            """)
+    List<OrdenMantenimiento> listarProximos(
+            @Param("estados") Collection<EstadoMantenimiento> estados,
+            @Param("hoy") LocalDate hoy,
+            Pageable pageable
+    );
 }

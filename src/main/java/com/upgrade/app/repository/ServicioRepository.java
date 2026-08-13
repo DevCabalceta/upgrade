@@ -65,4 +65,7 @@ public interface ServicioRepository extends JpaRepository<Servicio, Long> {
 
     @Query("SELECT COALESCE(MAX(s.orden), 0) FROM Servicio s WHERE s.eliminado = false")
     int obtenerOrdenMaximo();
+
+    @EntityGraph(attributePaths = "categoria")
+    List<Servicio> findTop5ByEliminadoFalseAndEstadoOrderByServiciosYtdDescNombreAsc(EstadoServicio estado);
 }

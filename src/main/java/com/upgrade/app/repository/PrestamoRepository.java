@@ -73,4 +73,16 @@ public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
     long contarPorDevolverHoy(@Param("estado") EstadoPrestamo estado, @Param("hoy") LocalDate hoy);
 
     long countByEstado(EstadoPrestamo estado);
+
+    @EntityGraph(attributePaths = {"cliente", "inventario", "responsable"})
+    List<Prestamo> findTop5ByOrderByFechaActualizacionDesc();
+
+    @EntityGraph(attributePaths = {"cliente", "inventario", "responsable"})
+    @Query("""
+            SELECT p FROM Prestamo p
+            WHERE p.estado = com.upgrade.app.domain.EstadoPrestamo.ACTIVO
+              AND p.fechaDevolucionEstimada >= :hoy
+            ORDER BY p.fechaDevolucionEstimada ASC, p.id ASC
+            """)
+    List<Prestamo> listarProximasDevoluciones(@Param("hoy") LocalDate hoy, Pageable pageable);
 }

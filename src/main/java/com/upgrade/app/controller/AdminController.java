@@ -18,12 +18,6 @@ public class AdminController {
         return "redirect:/login";
     }
 
-    @GetMapping("/dashboard")
-    public String dashboard() {
-        // Retorna el archivo ubicado en src/main/resources/templates/admin/dashboard.html
-        return "admin/dashboard"; 
-    }
-
     @GetMapping("/cotizaciones")
     public String cotizaciones() {
         return "admin/cotizaciones";

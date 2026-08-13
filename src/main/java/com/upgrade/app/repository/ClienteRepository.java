@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.time.LocalDateTime;
 
 @Repository
 public interface ClienteRepository extends JpaRepository<Cliente, Long> {
@@ -41,4 +42,10 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
     boolean existsByIdentificacionIgnoreCase(String identificacion);
 
     boolean existsByIdentificacionIgnoreCaseAndIdNot(String identificacion, Long id);
+
+    long countByActivoTrue();
+
+    long countByActivoTrueAndFechaRegistroBetween(LocalDateTime inicio, LocalDateTime fin);
+
+    List<Cliente> findTop5ByActivoTrueOrderByFechaRegistroDesc();
 }
