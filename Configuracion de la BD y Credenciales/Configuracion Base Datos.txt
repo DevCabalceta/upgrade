@@ -1,0 +1,8 @@
+Para que le funcione la Base de Datos con el proyecto en MySQL tiene que ejecutar los siguientes comandos:
+
+
+CREATE USER 'usuario_proyecto'@'localhost' IDENTIFIED BY '123456'; 
+
+GRANT ALL PRIVILEGES ON upgrade_erp.* TO 'usuario_proyecto'@'localhost'; 
+
+FLUSH PRIVILEGES;

@@ -1,0 +1,10 @@
+Repositorio: https://github.com/DevCabalceta/upgrade.git
+
+admin@upgrade.com
+admin123
+
+gabriel17@upgrade.com
+Admin123
+
+Prueba@upgrade.com
+Prueba123
